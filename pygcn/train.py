@@ -34,8 +34,8 @@ args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 # printfs
-print("TORCH CUDA Available: ")
-print(torch.cuda.is_available())
+# print("TORCH CUDA Available: ")
+# print(torch.cuda.is_available())
 
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
@@ -46,6 +46,7 @@ if args.cuda:
 adj, features, labels, idx_train, idx_val, idx_test = load_data()
 
 # Model and optimizer
+print("Model Steps: (#) \n#1")
 model = GCN(nfeat=features.shape[1],
             nhid=args.hidden,
             nclass=labels.max().item() + 1,
@@ -54,6 +55,7 @@ optimizer = optim.Adam(model.parameters(),
                        lr=args.lr, weight_decay=args.weight_decay)
 
 if args.cuda:
+    print("-- Running on CUDA --")
     model.cuda()
     features = features.cuda()
     adj = adj.cuda()
@@ -61,22 +63,28 @@ if args.cuda:
     idx_train = idx_train.cuda()
     idx_val = idx_val.cuda()
     idx_test = idx_test.cuda()
+else:
+    print("-- Running on CPU --")
 
 
 def train(epoch):
     t = time.time()
     model.train()
     optimizer.zero_grad()
+    print("#4")
     output = model(features, adj)
+    print("#7")
     loss_train = F.nll_loss(output[idx_train], labels[idx_train])
     acc_train = accuracy(output[idx_train], labels[idx_train])
     loss_train.backward()
     optimizer.step()
 
+
     if not args.fastmode:
         # Evaluate validation set performance separately,
         # deactivates dropout during validation run.
         model.eval()
+        print("#7(2) fastmode disabled")
         output = model(features, adj)
 
     loss_val = F.nll_loss(output[idx_val], labels[idx_val])
@@ -98,7 +106,6 @@ def test():
           "loss= {:.4f}".format(loss_test.item()),
           "accuracy= {:.4f}".format(acc_test.item()))
 
-
 # Train model
 t_total = time.time()
 for epoch in range(args.epochs):
@@ -107,4 +114,5 @@ print("Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
 # Testing
+print("-- Now Testing --")
 test()

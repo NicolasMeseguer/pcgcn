@@ -2,3 +2,4 @@
 /dist
 /pygcn.egg-info
 *.pyc
+*.sh
