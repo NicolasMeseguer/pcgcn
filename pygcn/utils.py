@@ -2,6 +2,8 @@ import numpy as np
 import scipy.sparse as sp
 import torch
 
+# print full size of matrices
+np.set_printoptions(threshold=np.inf)
 
 def encode_onehot(labels):
     classes = set(labels)
@@ -14,26 +16,87 @@ def encode_onehot(labels):
 
 def load_data(path="../data/cora/", dataset="cora"):
     """Load citation network dataset (cora only for now)"""
+
+    """ 
+    CORA Dataset Details. https://paperswithcode.com/dataset/cora
+    2708 rows (articulos cientificos), classified into one of 7 classes (última col)
+    Each row, has 1433 (size of dict) columns indicating the presence (1) or absence (0) of a word
+
+    The cora.cites file contains 5429 (edges) citations from one paper to another (nodes).
+    """
+
     print('Loading {} dataset...'.format(dataset))
 
+    # extract content (all) from cora (.content) and store it in a str matrix
     idx_features_labels = np.genfromtxt("{}{}.content".format(path, dataset),
                                         dtype=np.dtype(str))
+
+    # NOTE, matrix accesing [x, y]:
+    # x --> row
+    # y --> column
+
+    # NOTE, slicing a matrix
+    # i.e. https://www.programiz.com/python-programming/matrix#matrix-slicing
+    # [:,:] = everything
+    # [4, :] = 4th row, all columns
+    # [:, 1,-1] = all rows, from columns 1 ... till the end, minus 1
+    # [:, -1] = all rows, and print last column
+        # NOTE, nth column is = -1... nth-1 is equal to -2... and so on
+
+    # extracts the features (all the content of the matrix) and represent it in CSR
     features = sp.csr_matrix(idx_features_labels[:, 1:-1], dtype=np.float32)
+
+    # extracts the final column with the labels (last column)
+    # and represents it in a onehot vector
     labels = encode_onehot(idx_features_labels[:, -1])
 
-    # build graph
+    # extract the indices (column 0)
     idx = np.array(idx_features_labels[:, 0], dtype=np.int32)
+
+    # --- start building the graph ---
+
+    # index the indices
     idx_map = {j: i for i, j in enumerate(idx)}
+
+    # extract content (all) from cora (.cites) and store it in a np (int) matrix
     edges_unordered = np.genfromtxt("{}{}.cites".format(path, dataset),
                                     dtype=np.int32)
+
+    # converts the cora.cites so it uses the new indexes (the ones that idx_map assigned)
+    # map: it maps the function dict.get() using as input the variable edges_unordered.flatten()
     edges = np.array(list(map(idx_map.get, edges_unordered.flatten())),
                      dtype=np.int32).reshape(edges_unordered.shape)
+
+    """ 
+        Until now; what we have.
+
+        features    --> CSR Format
+        labels      --> onehot-encoding format
+        edges:      --> updated with the idx_map
+
+        explanation:    (cora.content) the paper id (column 0) indexed in idx_map, so we have node 0(row0col0), node 1(row1col0), node n(rowncol0)
+                        once done, we associate it with the raw edges, and update them so it points to the new references (new indexes)
+    """
+
+    # transform the edge 2col array into a COO sparse matrix
+    # construct from three arrays like (each piece of data goes to 1 position (i, j)):
+    #       coo_matrix((data, (i, j)), 
+    #                   [shape=(M, N)])
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
     adj = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
                         shape=(labels.shape[0], labels.shape[0]),
                         dtype=np.float32)
+    
+    # printing it in this way will show the idx of the papers (cora.cites with the new indexes)
+    # print(adj)
+    # easier to:
+    # print(adj.toarray())
 
+    # assume this will make a COO matrix symmetric
     # build symmetric adjacency matrix
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+
+    # TODO: continue from here
 
     features = normalize(features)
     adj = normalize(adj + sp.eye(adj.shape[0]))

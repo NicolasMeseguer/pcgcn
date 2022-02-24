@@ -45,6 +45,9 @@ if args.cuda:
 # Load data
 adj, features, labels, idx_train, idx_val, idx_test = load_data()
 
+# exit out automatically
+quit()
+
 # Model and optimizer
 print("Model Steps: (#) \n#1")
 model = GCN(nfeat=features.shape[1],
@@ -83,6 +86,8 @@ def train(epoch):
     if not args.fastmode:
         # Evaluate validation set performance separately,
         # deactivates dropout during validation run.
+        # droput = probability of training a given node in a layer.
+        # 1.0 means no dropout (will train), and 0.0 means no outputs from the layer.
         model.eval()
         print("#7(2) fastmode disabled")
         output = model(features, adj)
