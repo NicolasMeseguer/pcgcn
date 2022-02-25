@@ -70,9 +70,9 @@ def load_data(path="../data/cora/", dataset="cora"):
     """ 
         Until now; what we have.
 
-        features    --> CSR Format
-        labels      --> onehot-encoding format
-        edges:      --> updated with the idx_map
+        features    --> CSR Format (scipy sparse csr matrix)
+        labels      --> onehot-encoding format (numpy array)
+        edges:      --> updated with the idx_map (numpy array)
 
         explanation:    (cora.content) the paper id (column 0) indexed in idx_map, so we have node 0(row0col0), node 1(row1col0), node n(rowncol0)
                         once done, we associate it with the raw edges, and update them so it points to the new references (new indexes)
@@ -89,29 +89,59 @@ def load_data(path="../data/cora/", dataset="cora"):
     
     # printing it in this way will show the idx of the papers (cora.cites with the new indexes)
     # print(adj)
-    # easier to:
+    # easier to (adjacency matrix starting from [0][0]):
     # print(adj.toarray())
 
     # assume this will make a COO matrix symmetric
     # build symmetric adjacency matrix
+    # NOTE: why does it make it symmetric?
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
 
-    # TODO: continue from here
-
-    features = normalize(features)
+    # addition of an identity matrix of the same size (npapers*npapers)
+    # then normalize it
+    # NOTE: why does it sum a identity matrix ? are papers referencing themself ?
     adj = normalize(adj + sp.eye(adj.shape[0]))
 
+    # normalize fetures matrix
+    # why normalize? -> it makes the features more consistent with each other, 
+    #                   which allows the model to predict outputs 
+    #                   more accurately
+    features = normalize(features)
+
+    # creates 3 ranges, one for training, another one as values, and a final one for testing
     idx_train = range(140)
     idx_val = range(200, 500)
     idx_test = range(500, 1500)
 
-    features = torch.FloatTensor(np.array(features.todense()))
-    labels = torch.LongTensor(np.where(labels)[1])
-    adj = sparse_mx_to_torch_sparse_tensor(adj)
+    """ 
+        Until now; what we have.
 
+        adj             --> adjacency matrix normalized (scipy sparse coo matrix)
+        features        --> features matrix normalized (scipy sparse csr matrix)
+        three ranges    --> train, val & test (numpy arrays)
+    """
+
+    # convert matrices and arrays to tensors
+
+    # features csr matrix to float tensor representation (the full matrix)
+    features = torch.FloatTensor(np.array(features.todense()))
+
+    # converts labels to a long tensor
+    # np.where(labels)[1] is a vector indicating the paper class (0-6) of each paper (there are 2708 rows) 
+    labels = torch.LongTensor(np.where(labels)[1])
+
+    # convert adjacency (scipy sparse) coo matrix to a (torch sparse) coo tensor
+    # print(adj)
+    adj = sparse_mx_to_torch_sparse_tensor(adj)
+    # print(adj.todense().numpy())
+    # These two prints should be the same
+
+    # creates arrays of length (range)
     idx_train = torch.LongTensor(idx_train)
     idx_val = torch.LongTensor(idx_val)
     idx_test = torch.LongTensor(idx_test)
+
+    print('{} dataset loaded...'.format(dataset))
 
     return adj, features, labels, idx_train, idx_val, idx_test
 

@@ -5,7 +5,9 @@ from pygcn.layers import GraphConvolution
 
 class GCN(nn.Module):
     def __init__(self, nfeat, nhid, nclass, dropout):
-        print("#2")
+
+        # Step no. 2
+
         super(GCN, self).__init__()
 
         self.gc1 = GraphConvolution(nfeat, nhid)
@@ -13,11 +15,9 @@ class GCN(nn.Module):
         self.dropout = dropout
 
     def forward(self, x, adj):
-        print("#5 (forward model)")
-        print("-----------------------------------------")
-        print(x)
-        print(adj)
-        print("-----------------------------------------")
+
+        # Step no. 5 (forwarding of the model)
+        
         x = F.relu(self.gc1(x, adj))
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.gc2(x, adj)

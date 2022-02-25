@@ -12,8 +12,11 @@ class GraphConvolution(Module):
     """
 
     def __init__(self, in_features, out_features, bias=True):
-        print("#3 (x2: 2 gcn layers)")
+
+        # Step no. 3 (twice --> 2 gcn layers)
+
         super(GraphConvolution, self).__init__()
+
         self.in_features = in_features
         self.out_features = out_features
         self.weight = Parameter(torch.FloatTensor(in_features, out_features))
@@ -30,11 +33,14 @@ class GraphConvolution(Module):
             self.bias.data.uniform_(-stdv, stdv)
 
     def forward(self, input, adj):
-        print("#6 (forward gcn layers)")
+        # Step no. 6 (forwarding of the layers)
+
         #combinacion
         support = torch.mm(input, self.weight)
+
         #agregacion
         output = torch.spmm(adj, support)
+        
         if self.bias is not None:
             return output + self.bias
         else:
