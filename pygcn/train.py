@@ -29,6 +29,8 @@ parser.add_argument('--hidden', type=int, default=16,
                     help='Number of hidden units.')
 parser.add_argument('--dropout', type=float, default=0.5,
                     help='Dropout rate (1 - keep probability).')
+parser.add_argument('--nparts', type=int, default=1,
+                    help='Number of subgraphs.')		
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -51,7 +53,8 @@ adj, features, labels, idx_train, idx_val, idx_test = load_data()
 model = GCN(nfeat=features.shape[1],
             nhid=args.hidden,
             nclass=labels.max().item() + 1,
-            dropout=args.dropout)
+            dropout=args.dropout,
+			nparts=args.nparts)
 optimizer = optim.Adam(model.parameters(),
                        lr=args.lr, weight_decay=args.weight_decay)
 
