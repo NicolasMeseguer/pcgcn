@@ -2,6 +2,9 @@ import numpy as np
 import scipy.sparse as sp
 import torch
 
+from random import randrange
+import numpy as np
+
 # print full size of matrices
 np.set_printoptions(threshold=np.inf)
 
@@ -13,6 +16,13 @@ def encode_onehot(labels):
                              dtype=np.int32)
     return labels_onehot
 
+# Simulates METIS. Subgraphs are not balanced, one may have more load than another
+def random_partition(nvectors, nparts):
+    partitions = [[] for x in range(nparts)]
+    for i in range(nvectors):
+        partitions[randrange(nparts)].append(i)
+
+    return partitions
 
 def load_data(path="../data/cora/", dataset="cora"):
     """Load citation network dataset (cora only for now)"""

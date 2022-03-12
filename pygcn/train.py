@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pygcn.utils import load_data, accuracy
+from pygcn.utils import load_data, accuracy, random_partition
 from pygcn.models import GCN
 
 # Training settings
@@ -48,13 +48,17 @@ if args.cuda:
 # Load data
 adj, features, labels, idx_train, idx_val, idx_test = load_data()
 
+# Partition de graph
+    # randomly partition the graph into args.nparts
+subgraphs = random_partition(int(adj.shape[0]), args.nparts)
+
 # Model and optimizer
 # Step no. 1
 model = GCN(nfeat=features.shape[1],
             nhid=args.hidden,
             nclass=labels.max().item() + 1,
             dropout=args.dropout,
-			nparts=args.nparts)
+			subgraphs=subgraphs)
 optimizer = optim.Adam(model.parameters(),
                        lr=args.lr, weight_decay=args.weight_decay)
 
