@@ -4,14 +4,14 @@ from pygcn.layers import GraphConvolution
 
 
 class GCN(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout, subgraphs):
+    def __init__(self, nfeat, nhid, nclass, dropout, subgraphs, edge_blocks, compute_gcn):
 
         # Step no. 2
 
         super(GCN, self).__init__()
 
-        self.gc1 = GraphConvolution(nfeat, nhid, subgraphs)
-        self.gc2 = GraphConvolution(nhid, nclass, subgraphs)
+        self.gc1 = GraphConvolution(nfeat, nhid, subgraphs, edge_blocks, compute_gcn)
+        self.gc2 = GraphConvolution(nhid, nclass, subgraphs, edge_blocks, compute_gcn)
         self.dropout = dropout
 
     def forward(self, x, adj):

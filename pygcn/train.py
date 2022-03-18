@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pygcn.utils import load_data, accuracy, random_partition
+from pygcn.utils import load_data, accuracy, random_partition, compute_edge_block
 from pygcn.models import GCN
 
 # Training settings
@@ -30,14 +30,16 @@ parser.add_argument('--hidden', type=int, default=16,
 parser.add_argument('--dropout', type=float, default=0.5,
                     help='Dropout rate (1 - keep probability).')
 parser.add_argument('--nparts', type=int, default=1,
-                    help='Number of subgraphs.')		
+                    help='Number of subgraphs.')
+parser.add_argument('--gcn', action='store_true', default=False,
+                    help='Execute using GCN.')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 # CUDA Available
 if not args.cuda:
-    print("TORCH CUDA Available: ", end =" ")
+    print("Running WITHOUT CUDA, is it Available ?", end =" ")
     print(torch.cuda.is_available())
 
 np.random.seed(args.seed)
@@ -48,9 +50,17 @@ if args.cuda:
 # Load data
 adj, features, labels, idx_train, idx_val, idx_test = load_data()
 
-# Partition de graph
+# Start partitioning the graph
+subgraphs = None
+edge_blocks = None
+if not args.gcn:
+    print("Partitioning graph...")
+
     # randomly partition the graph into args.nparts
-subgraphs = random_partition(int(adj.shape[0]), args.nparts)
+    subgraphs = random_partition(int(adj.shape[0]), args.nparts)
+
+    # based on the subgraphs and the adj matrix, get the edgeblocks
+    edge_blocks = compute_edge_block(subgraphs, adj)
 
 # Model and optimizer
 # Step no. 1
@@ -58,11 +68,13 @@ model = GCN(nfeat=features.shape[1],
             nhid=args.hidden,
             nclass=labels.max().item() + 1,
             dropout=args.dropout,
-			subgraphs=subgraphs)
+			subgraphs=subgraphs,
+            edge_blocks=edge_blocks,
+            compute_gcn=args.gcn)
 optimizer = optim.Adam(model.parameters(),
                        lr=args.lr, weight_decay=args.weight_decay)
 
-if args.cuda:
+if args.cuda and args.gcn:
     print("-- Running on CUDA --")
     model.cuda()
     features = features.cuda()
@@ -71,6 +83,9 @@ if args.cuda:
     idx_train = idx_train.cuda()
     idx_val = idx_val.cuda()
     idx_test = idx_test.cuda()
+elif args.cuda and not args.gcn:
+    print("-- PCGCN not avaiable on CUDA (yet) --")
+    exit(1)
 else:
     print("-- Running on CPU --")
 

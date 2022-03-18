@@ -3,7 +3,6 @@ import scipy.sparse as sp
 import torch
 
 from random import randrange
-import numpy as np
 
 # print full size of matrices
 np.set_printoptions(threshold=np.inf)
@@ -23,6 +22,34 @@ def random_partition(nvectors, nparts):
         partitions[randrange(nparts)].append(i)
 
     return partitions
+
+# Computes the edge block given the subgraphs and the adh matrix
+def compute_edge_block(subgraphs, adj):
+
+    adj_numpy = adj.to_dense().numpy()
+
+    # Array list to store the edge_blocks
+    edge_block = []
+
+    # Iterate over a subgraph
+    for k in range(len(subgraphs)):
+
+        # Check subgraphs that are connected
+        for i in range(len(subgraphs)):
+
+            # Create a matrix of size (NodesK x NodesI) to store adj values
+            sub_edge_block = np.zeros((len(subgraphs[k]), len(subgraphs[i])), dtype=float)
+
+            # Iterate over all the nodes of the subgraphs and for those with a value, store them.
+            for x in range(len(subgraphs[k])):
+                for y in range(len(subgraphs[i])):
+                    if(adj_numpy[subgraphs[k][x]][subgraphs[i][y]] != 0):
+                        sub_edge_block[x][y] = adj_numpy[subgraphs[k][x]][subgraphs[i][y]]
+
+            # Append the subgraph edge block to the array list
+            edge_block.append(torch.FloatTensor(sub_edge_block))
+
+    return edge_block
 
 def load_data(path="../data/cora/", dataset="cora"):
     """Load citation network dataset (cora only for now)"""
@@ -150,8 +177,6 @@ def load_data(path="../data/cora/", dataset="cora"):
     idx_train = torch.LongTensor(idx_train)
     idx_val = torch.LongTensor(idx_val)
     idx_test = torch.LongTensor(idx_test)
-
-    print('{} dataset loaded...'.format(dataset))
 
     return adj, features, labels, idx_train, idx_val, idx_test
 
