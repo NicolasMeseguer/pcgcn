@@ -1,30 +1,30 @@
-Graph Convolutional Networks in PyTorch
+Partition Centric Graph Convolutional Networks in PyTorch PC(py)GCN
 ====
 
-PyTorch implementation of Graph Convolutional Networks (GCNs) for semi-supervised classification [1].
+PyTorch implementation of Graph Convolutional Networks (GCNs) for semi-supervised classification [1] and Partition Centric Processing (PCGCN) for Accelerating Graph Convolutional Network [3].
 
 For a high-level introduction to GCNs, see:
 
 Thomas Kipf, [Graph Convolutional Networks](http://tkipf.github.io/graph-convolutional-networks/) (2016)
 
-![Graph Convolutional Networks](figure.png)
-
-Note: There are subtle differences between the TensorFlow implementation in https://github.com/tkipf/gcn and this PyTorch re-implementation. This re-implementation serves as a proof of concept and is not intended for reproduction of the results reported in [1].
-
-This implementation makes use of the Cora dataset from [2].
+This implementation makes use of the Cora dataset from [2] more datasets are expected to be available.
 
 ## Installation
 
-```python setup.py install```
+```python setup.py install``` :warning: Check requirements !
 
 ## Requirements
 
-  * PyTorch 0.4 or 0.5
-  * Python 2.7 or 3.6
+  * Python 3.6
+    * NumPy 1.19.5
+    * PyTorch 1.2.0
+    * SciPy 1.5.4
 
 ## Usage
 
-```python train.py```
+* ```make`` :wrench: To compile necessaries libraries.
+* ```make run``` :running: Executes the model (Makefile --> to modify it).
+* ```make clean``` :recycle: Cleans
 
 ## References
 
@@ -32,9 +32,11 @@ This implementation makes use of the Cora dataset from [2].
 
 [2] [Sen et al., Collective Classification in Network Data, AI Magazine 2008](http://linqs.cs.umd.edu/projects/projects/lbc/)
 
+[3] [Tian et al., Partition-Centric Processing for Accelerating Graph Convolutional Network, 2020](https://ieeexplore.ieee.org/document/9139807)
+
 ## Cite
 
-Please cite our paper if you use this code in your own work:
+Please cite this paper if you use any of this (code) in your own work:
 
 ```
 @article{kipf2016semi,
@@ -43,4 +45,10 @@ Please cite our paper if you use this code in your own work:
   journal={arXiv preprint arXiv:1609.02907},
   year={2016}
 }
+@article{tian2020pcgcn,
+  title={PCGCN: Partition-Centric Processing for Accelerating Graph Convolutional Network}, 
+  author={Tian, Chao and Ma, Lingxiao and Yang, Zhi and Dai, Yafei},
+  year={2020},
+  pages={936-945},
+  doi={10.1109/IPDPS47924.2020.00100}}
 ```
