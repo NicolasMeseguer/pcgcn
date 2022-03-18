@@ -24,7 +24,7 @@ This implementation makes use of the Cora dataset from [2] more datasets are exp
 
 * ```make``` :wrench: To compile necessaries libraries.
 * ```make run``` :running: Executes the model (Makefile --> to modify it).
-* ```make clean``` :recycle: Cleans the project folder
+* ```make clean``` :recycle: Cleans the project folder.
 
 ## References
 
@@ -48,7 +48,8 @@ Please cite this paper if you use any of this (code) in your own work:
 @article{tian2020pcgcn,
   title={PCGCN: Partition-Centric Processing for Accelerating Graph Convolutional Network}, 
   author={Tian, Chao and Ma, Lingxiao and Yang, Zhi and Dai, Yafei},
-  year={2020},
   pages={936-945},
-  doi={10.1109/IPDPS47924.2020.00100}}
+  doi={10.1109/IPDPS47924.2020.00100}
+  year={2020},
+  }
 ```
