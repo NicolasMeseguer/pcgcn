@@ -22,9 +22,9 @@ This implementation makes use of the Cora dataset from [2] more datasets are exp
 
 ## Usage
 
-* ```make`` :wrench: To compile necessaries libraries.
+* ```make``` :wrench: To compile necessaries libraries.
 * ```make run``` :running: Executes the model (Makefile --> to modify it).
-* ```make clean``` :recycle: Cleans
+* ```make clean``` :recycle: Cleans the project folder
 
 ## References
 
