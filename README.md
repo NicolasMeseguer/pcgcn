@@ -1,4 +1,4 @@
-Partition Centric Graph Convolutional Networks in PyTorch PC(py)GCN
+Partition Centric Graph Convolutional Networks in PyTorch, PC(py)GCN
 ====
 
 PyTorch implementation of Graph Convolutional Networks (GCNs) for semi-supervised classification [1] and Partition Centric Processing (PCGCN) for Accelerating Graph Convolutional Network [3].
