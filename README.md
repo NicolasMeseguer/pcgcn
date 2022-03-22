@@ -11,7 +11,7 @@ This implementation makes use of the Cora dataset from [2] more datasets are exp
 
 ## Requirements
 
-  * Python 3.6
+  * Python 3.6.x (rec. 15)
     * NumPy 1.19.5
     * PyTorch 1.2.0
     * SciPy 1.5.4
