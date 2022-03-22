@@ -1,6 +1,6 @@
 /build
 /dist
-/pygcn.egg-info
+/pcgcn.egg-info
 *.pyc
 *.sh
 *.txt

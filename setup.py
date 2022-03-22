@@ -1,7 +1,7 @@
 from setuptools import setup
 from setuptools import find_packages
 
-setup(name='pygcn',
+setup(name='pcgcn',
       version='0.1',
       description='Partition Centric Graph Convolutional Networks in PyTorch',
       author='Nicolas Meseguer',
@@ -12,5 +12,5 @@ setup(name='pygcn',
                         'torch',
                         'scipy'
                         ],
-      package_data={'pygcn': ['README.md']},
+      package_data={'pcgcn': ['README.md']},
       packages=find_packages())
