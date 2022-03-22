@@ -9,10 +9,6 @@ Thomas Kipf, [Graph Convolutional Networks](http://tkipf.github.io/graph-convolu
 
 This implementation makes use of the Cora dataset from [2] more datasets are expected to be available.
 
-## Installation
-
-```python setup.py install``` :warning: Check requirements !
-
 ## Requirements
 
   * Python 3.6
@@ -20,10 +16,15 @@ This implementation makes use of the Cora dataset from [2] more datasets are exp
     * PyTorch 1.2.0
     * SciPy 1.5.4
 
+## Installation
+
+```python requirements.py``` :warning: Quickly check requirements.
+```python setup.py install``` :arrows_counterclockwise: Setups the PyGCN module.
+
 ## Usage
 
 * ```make``` :wrench: To compile necessaries libraries.
-* ```make run``` :running: Executes the model (Makefile --> to modify it).
+* ```make run``` :running: Executes the model with default parameters.
 * ```make clean``` :recycle: Cleans the project folder.
 
 ## References
@@ -49,7 +50,7 @@ Please cite this paper if you use any of this (code) in your own work:
   title={PCGCN: Partition-Centric Processing for Accelerating Graph Convolutional Network}, 
   author={Tian, Chao and Ma, Lingxiao and Yang, Zhi and Dai, Yafei},
   pages={936-945},
-  doi={10.1109/IPDPS47924.2020.00100}
-  year={2020},
-  }
+  doi={10.1109/IPDPS47924.2020.00100},
+  year={2020}
+}
 ```
