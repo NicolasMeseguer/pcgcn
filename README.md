@@ -18,8 +18,8 @@ This implementation makes use of the Cora dataset from [2] more datasets are exp
 
 ## Installation
 
-```python requirements.py``` :warning: Quickly check requirements.
-```python setup.py install``` :arrows_counterclockwise: Setups the PyGCN module.
+* ```python requirements.py``` :warning: Quickly check requirements.
+* ```python setup.py install``` :arrows_counterclockwise: Setups the PyGCN module.
 
 ## Usage
 
