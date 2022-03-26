@@ -22,8 +22,8 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 
 1. Install METIS
    1. ```$ cd metis-5.1.0/``` :point_right: Move to the METIS dir.
-   2. ```$ make config cc=gcc prefix=../../../metis``` :wrench: Configure METIS passing options.
-   3. ```$ make install``` :arrow_down: Install METIS.
+   2. ```$ make config cc=gcc prefix=../../../metis``` :wrench: Configure METIS passing options to the Makefile.
+   3. ```$ make install``` :arrow_down: Installs METIS on pcgcn folder.
 
 2. Compile PCGCN
    1. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
