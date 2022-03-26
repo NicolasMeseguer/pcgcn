@@ -21,14 +21,14 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 ## Installation
 
 1. Install METIS
-  1. ```$ cd metis-5.1.0/``` :point_right: Move to the METIS dir.
-  2. ```$ make config cc=gcc prefix=../../../metis``` :wrench: Configure METIS passing options.
-  3. ```$ make install``` :arrow_down: Install METIS.
+   1. ```$ cd metis-5.1.0/``` :point_right: Move to the METIS dir.
+   2. ```$ make config cc=gcc prefix=../../../metis``` :wrench: Configure METIS passing options.
+   3. ```$ make install``` :arrow_down: Install METIS.
 
 2. Compile PCGCN
-  1. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
-  2. ```$ python requirements.py``` :wrench: Quickly check requirements.
-  3. ```$ make``` :arrow_down: Compiles and installs the PCGCN module.
+   1. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
+   2. ```$ python requirements.py``` :wrench: Quickly check requirements.
+   3. ```$ make``` :arrow_down: Compiles and installs the PCGCN module.
 
 ## Usage
 
@@ -37,14 +37,14 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 ## Uninstall
 
 1. Uninstall METIS
-  i. ```$ cd metis-5.1.0/``` :point_right: Move to the METIS dir.
-  ii. ```$ make uninstall``` :warning: Removes all files installed by 'make install'.
-  iii. ```$ make distclean``` :recycle: Performs clean and completely removes the build directory.
+   i. ```$ cd metis-5.1.0/``` :point_right: Move to the METIS dir.
+   ii. ```$ make uninstall``` :warning: Removes all files installed by 'make install'.
+   iii. ```$ make distclean``` :recycle: Performs clean and completely removes the build directory.
 
 2. Uninstall PCGCN
-  i. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
-    - ```$ make clean``` :recycle: Deletes the PCGCN module but keeps the dirs.
-    - ```$ make fullclean``` :recycle: Completely removes PCGCN.
+   i. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
+      - ```$ make clean``` :recycle: Deletes the PCGCN module but keeps the dirs.
+      - ```$ make fullclean``` :recycle: Completely removes PCGCN.
 
 ## Notes
 
