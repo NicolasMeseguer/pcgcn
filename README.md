@@ -44,7 +44,7 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 2. Uninstall PCGCN
    1. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
       - ```$ make clean``` :recycle: Deletes the PCGCN module but keeps the dirs.
-      - ```$ make fullclean``` :recycle: Completely removes PCGCN.
+      - ```$ make distclean``` :recycle: Performs clean and completely removes PCGCN.
 
 ## Notes
 

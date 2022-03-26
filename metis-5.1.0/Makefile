@@ -75,6 +75,7 @@ config: distclean
 
 distclean:
 	rm -rf $(BUILDDIR)
+	rm -rf build/
 
 remake:
 	find . -name CMakeLists.txt -exec touch {} ';'
