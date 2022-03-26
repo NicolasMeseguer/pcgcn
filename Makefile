@@ -6,3 +6,6 @@ run:
 
 clean:
 	python setup.py clean;
+
+fullclean:
+	python setup.py clean; rm -rf build; rm -rf dist; rm -rf pcgcn.egg-info;

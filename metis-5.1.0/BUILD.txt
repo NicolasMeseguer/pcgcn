@@ -12,9 +12,9 @@ Configuration
 METIS is primarily configured by passing options to make config. For
 example:
 
-     $ make config shared=1 cc=gcc-4.2
+     $ make config cc=gcc-7 shared=0 prefix=/metis
 
-would configure metis to be built as a shared library using GCC 4.2.
+would configure metis to be built as a non-shared library using GCC 7 in the metis parent folder.
 
 Common configuration options are:
   cc=[compiler]   - The C compiler to use [default is determined by CMake]
@@ -41,12 +41,11 @@ To install METIS, run
 The default installation prefix is /usr/local. To pick an installation 
 prefix for METIS pass prefix=[path] to make config. For example,
 
-    $ make config cc=gcc-5 prefix=~/CUDA/METISInstall
-    $ make config cc=gcc-5 prefix=~/CUDA/SPMM/METIS
+    $ make config cc=gcc prefix=../../../metis
 
     $ make install
 
-will cause METIS to be installed in ~/CUDA/METISInstall when make install is run.
+will cause METIS to be installed in pcgcn's root folder when make install is run.
 
 
 Other make commands
