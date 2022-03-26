@@ -37,12 +37,12 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 ## Uninstall
 
 1. Uninstall METIS
-   i. ```$ cd metis-5.1.0/``` :point_right: Move to the METIS dir.
-   ii. ```$ make uninstall``` :warning: Removes all files installed by 'make install'.
-   iii. ```$ make distclean``` :recycle: Performs clean and completely removes the build directory.
+   1. ```$ cd metis-5.1.0/``` :point_right: Move to the METIS dir.
+   2. ```$ make uninstall``` :warning: Removes all files installed by 'make install'.
+   3. ```$ make distclean``` :recycle: Performs clean and completely removes the build directory.
 
 2. Uninstall PCGCN
-   i. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
+   1. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
       - ```$ make clean``` :recycle: Deletes the PCGCN module but keeps the dirs.
       - ```$ make fullclean``` :recycle: Completely removes PCGCN.
 
