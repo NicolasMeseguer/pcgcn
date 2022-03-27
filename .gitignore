@@ -3,4 +3,6 @@
 /pcgcn.egg-info
 /metis
 /metis-5.1.0/build
+*.graph*
 *.pyc
+/*.txt
