@@ -1,7 +1,7 @@
 Partition Centric Graph Convolutional Networks in PyTorch, PCGCN
 ====
 
-PyTorch implementation of Graph Convolutional Networks (GCNs) for semi-supervised classification [1] and Partition Centric Processing (PCGCN) for Accelerating Graph Convolutional Network [3].
+PyTorch implementation of Graph Convolutional Networks (GCNs) for semi-supervised classification [1] and Partition Centric Processing (PCGCN) for Accelerating Graph Convolutional Network [3] using METIS [4] as the partitioning algorithm.
 
 For a high-level introduction to GCNs, see:
 
@@ -58,6 +58,8 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 
 [3] [Tian et al., Partition-Centric Processing for Accelerating Graph Convolutional Network, 2020](https://ieeexplore.ieee.org/document/9139807)
 
+[4] [George Karypis & Vipin Kumar, A Fast and Highly Quality Multilevel Scheme for Partitioning Irregular Graphs, 199](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview)
+
 ## Cite
 
 Please cite this paper if you use any of this (code) in your own work:
@@ -75,5 +77,14 @@ Please cite this paper if you use any of this (code) in your own work:
   pages={936-945},
   doi={10.1109/IPDPS47924.2020.00100},
   year={2020}
+}
+@article{tian2020pcgcn,
+  title={A Fast and Highly Quality Multilevel Scheme for Partitioning Irregular Graphs}, 
+  author={George Karypis and Vipin Kumar},
+  pages={359-392},
+  journal={SIAM Journal on Scientific Computing},
+  volume={20},
+  number={1},
+  year={1999}
 }
 ```
