@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pcgcn.utils import load_data, accuracy, random_partition, compute_edge_block
+from pcgcn.utils import load_data, accuracy, random_partition, metis_partition, compute_edge_block
 from pcgcn.models import GCN
 
 # Training settings
@@ -33,6 +33,8 @@ parser.add_argument('--nparts', type=int, default=1,
                     help='Number of subgraphs.')
 parser.add_argument('--gcn', action='store_true', default=False,
                     help='Execute using GCN.')
+parser.add_argument('--metis', action='store_true', default=False,
+                    help='Partitions the graph using METIS.')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -48,7 +50,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-adj, features, labels, idx_train, idx_val, idx_test = load_data()
+adj, features, labels, idx_train, idx_val, idx_test, datasetname = load_data()
 
 # Start partitioning the graph
 subgraphs = None
@@ -56,8 +58,11 @@ edge_blocks = None
 if not args.gcn:
     print("Partitioning graph...")
 
-    # randomly partition the graph into args.nparts
-    subgraphs = random_partition(int(adj.shape[0]), args.nparts)
+    # partitions the graph into args.nparts
+    if args.metis:
+        subgraphs = metis_partition(adj, args.nparts, datasetname)
+    else:
+        subgraphs = random_partition(int(adj.shape[0]), args.nparts)
 
     # based on the subgraphs and the adj matrix, get the edgeblocks
     edge_blocks = compute_edge_block(subgraphs, adj)

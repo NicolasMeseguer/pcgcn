@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 import torch
+import os.path
+import subprocess
 
 from random import randrange
 
@@ -15,7 +17,7 @@ def encode_onehot(labels):
                              dtype=np.int32)
     return labels_onehot
 
-# Simulates METIS. Subgraphs are not balanced, one may have more load than another
+# Random partition. Subgraphs are not balanced, one may have more load than another
 def random_partition(nvectors, nparts):
     partitions = [[] for x in range(nparts)]
     for i in range(nvectors):
@@ -23,7 +25,70 @@ def random_partition(nvectors, nparts):
 
     return partitions
 
-# Computes the edge block given the subgraphs and the adh matrix
+# Calls METIS for partitioning the graph
+def metis_partition(adj, nparts, datasetname):
+
+    graphpath = "../data/" + str(datasetname) + "/" + str(datasetname) + ".graph"
+
+    # If the dataset is not transformed to METIS then, do it
+    if not os.path.isfile(graphpath):
+        print("Converting to METIS...")
+
+        adj_numpy = adj.to_dense().numpy()
+        nvectors = int(adj.shape[0])
+        
+        content = ""
+        nedges = 0
+        for i in range(nvectors):
+            linetowrite = ""
+            for j in range(nvectors):
+                if(adj_numpy[i][j] != 0):
+                    linetowrite += str(j + 1) + " "
+                    nedges += 1
+            content += linetowrite.rstrip() + "\n"
+
+        graphfile = open(graphpath, "w")
+        graphfile.write(str(nvectors) + " " + str(int(nedges/2)) + "\n")
+        graphfile.write(content)
+        graphfile.close()
+    
+    # The file already exists, then call METIS with graphfile and nparts
+    metispath = "../metis/bin/gpmetis"
+
+    if not os.path.isfile(metispath):
+        print("You MUST install METIS in order to use '--metis' as the partitioning algorithm.\nExiting now...")
+        exit(1)
+    
+    print("Calling METIS...")
+    subprocess.Popen([metispath, graphpath, str(nparts)] ) #, stdout = subprocess.PIPE)
+
+    # Process the METIS output
+    outputpath = "../data/" + str(datasetname) + "/" + str(datasetname) + ".graph.part." + str(nparts)
+
+    if not os.path.isfile(outputpath):
+        print("METIS output not found, even when it was executed...\nExiting now...")
+        exit(1)
+    
+    graphfile = open(outputpath, "r")
+
+    # Dump content of file
+    fileDump = []
+    for line in graphfile:
+        fileDump.append(int(line))
+    fileDump = np.array(fileDump)
+
+    graphfile.close()
+
+    partitions = [[] for x in range(nparts)]
+
+    tmpVertex = 0
+    for line in fileDump:
+        partitions[line].append(tmpVertex)
+        tmpVertex += 1
+
+    return partitions
+
+# Computes the edge block given the subgraphs and the adj matrix
 def compute_edge_block(subgraphs, adj):
 
     adj_numpy = adj.to_dense().numpy()
@@ -178,7 +243,7 @@ def load_data(path="../data/cora/", dataset="cora"):
     idx_val = torch.LongTensor(idx_val)
     idx_test = torch.LongTensor(idx_test)
 
-    return adj, features, labels, idx_train, idx_val, idx_test
+    return adj, features, labels, idx_train, idx_val, idx_test, dataset
 
 
 def normalize(mx):

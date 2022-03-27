@@ -11,12 +11,12 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 
 ## Requirements
 
-  * C compiler that supports the C99 standard (e.g. gcc 7.5.0).
-  * CMake 2.8
-  * Python 3.6.x (rec. 15)
-    * NumPy 1.19.5
-    * PyTorch 1.2.0
-    * SciPy 1.5.4
+* C compiler that supports the C99 standard (e.g. gcc 7.5.0).
+* CMake 2.8
+* Python 3.6.x (rec. 15)
+   * NumPy 1.19.5
+   * PyTorch 1.2.0
+   * SciPy 1.5.4
 
 ## Installation
 
@@ -28,7 +28,7 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 2. Compile PCGCN
    1. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
    2. ```$ python requirements.py``` :wrench: Quickly check requirements.
-   3. ```$ make``` :arrow_down: Compiles and installs the PCGCN module.
+   3. ```$ make install``` :arrow_down: Compiles and installs the PCGCN module.
 
 ## Usage
 
@@ -48,7 +48,7 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 
 ## Notes
 
-  1. Make sure to recompile PCGCN, ```$ make```, whenever you change any module (i.e. layers, model, train, etc).
+1. Make sure to recompile PCGCN, ```$ make install```, whenever you change any module (i.e. layers, model, train, etc).
 
 ## References
 
