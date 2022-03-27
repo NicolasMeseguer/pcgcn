@@ -58,7 +58,7 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 
 [3] [Tian et al., Partition-Centric Processing for Accelerating Graph Convolutional Network, 2020](https://ieeexplore.ieee.org/document/9139807)
 
-[4] [George Karypis & Vipin Kumar, A Fast and Highly Quality Multilevel Scheme for Partitioning Irregular Graphs, 199](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview)
+[4] [George Karypis & Vipin Kumar, A Fast and Highly Quality Multilevel Scheme for Partitioning Irregular Graphs, 1999](http://glaros.dtc.umn.edu/gkhome/metis/metis/overview)
 
 ## Cite
 
