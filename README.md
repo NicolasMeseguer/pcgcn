@@ -78,7 +78,7 @@ Please cite this paper if you use any of this (code) in your own work:
   doi={10.1109/IPDPS47924.2020.00100},
   year={2020}
 }
-@article{tian2020pcgcn,
+@article{george1999metis,
   title={A Fast and Highly Quality Multilevel Scheme for Partitioning Irregular Graphs}, 
   author={George Karypis and Vipin Kumar},
   pages={359-392},
