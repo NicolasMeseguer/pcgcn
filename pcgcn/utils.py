@@ -3,6 +3,7 @@ import scipy.sparse as sp
 import torch
 import os.path
 import subprocess
+import time
 
 from random import randrange
 
@@ -60,10 +61,11 @@ def metis_partition(adj, nparts, datasetname):
         exit(1)
     
     print("Calling METIS...")
-    subprocess.Popen([metispath, graphpath, str(nparts)] ) #, stdout = subprocess.PIPE)
+    subprocess.Popen([metispath, graphpath, str(nparts)], stdout = subprocess.PIPE)
 
     # Process the METIS output
     outputpath = "../data/" + str(datasetname) + "/" + str(datasetname) + ".graph.part." + str(nparts)
+    time.sleep(3)
 
     if not os.path.isfile(outputpath):
         print("METIS output not found, even when it was executed...\nExiting now...")
@@ -85,6 +87,8 @@ def metis_partition(adj, nparts, datasetname):
     for line in fileDump:
         partitions[line].append(tmpVertex)
         tmpVertex += 1
+
+    print("Partitioning done!")
 
     return partitions
 
