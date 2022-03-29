@@ -65,7 +65,7 @@ def metis_partition(adj, nparts, datasetname):
 
     # Process the METIS output
     outputpath = "../data/" + str(datasetname) + "/" + str(datasetname) + ".graph.part." + str(nparts)
-    time.sleep(3)
+    time.sleep(1)
 
     if not os.path.isfile(outputpath):
         print("METIS output not found, even when it was executed...\nExiting now...")
