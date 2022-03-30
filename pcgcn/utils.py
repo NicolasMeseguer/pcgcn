@@ -97,7 +97,7 @@ def compute_edge_block(subgraphs, adj):
 
     adj_numpy = adj.to_dense().numpy()
 
-    # Array list to store the edge_blocks
+    # Array list to store the edge_blocks (should contain sparse and dense edge_blocks).
     edge_block = []
 
     # Iterate over a subgraph

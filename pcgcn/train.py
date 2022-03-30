@@ -64,7 +64,7 @@ if not args.gcn:
     else:
         subgraphs = random_partition(int(adj.shape[0]), args.nparts)
 
-    # based on the subgraphs and the adj matrix, get the edgeblocks
+    # based on the subgraphs and the adj matrix, get the edgeblocks.
     edge_blocks = compute_edge_block(subgraphs, adj)
 
 # Model and optimizer
