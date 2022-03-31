@@ -140,7 +140,6 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
         if(sparsity_block[i] > sparsity_threshold ):
             edge_block[i] = sparse_float_to_coo(edge_block[i])
 
-    exit(1)
     return edge_block, sparsity_block
 
 def load_data(path="../data/cora/", dataset="cora"):
