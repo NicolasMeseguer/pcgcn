@@ -31,8 +31,6 @@ parser.add_argument('--dropout', type=float, default=0.5,
                     help='Dropout rate (1 - keep probability).')
 parser.add_argument('--nparts', type=int, default=1,
                     help='Number of subgraphs.')
-parser.add_argument('--sparsity_threshold', type=float, default=60.00,
-                    help='Determines the maximum sparsity for each edge block.')
 parser.add_argument('--gcn', action='store_true', default=False,
                     help='Execute using GCN.')
 parser.add_argument('--metis', action='store_true', default=False,
@@ -57,7 +55,6 @@ adj, features, labels, idx_train, idx_val, idx_test, datasetname = load_data()
 # Start partitioning the graph
 subgraphs = None
 edge_blocks = None
-sparsity_blocks = None
 if not args.gcn:
     print("Partitioning graph...")
 
@@ -68,7 +65,7 @@ if not args.gcn:
         subgraphs = random_partition(int(adj.shape[0]), args.nparts)
 
     # based on the subgraphs and the adj matrix, get the edgeblocks.
-    edge_blocks, sparsity_blocks = compute_edge_block(subgraphs, adj, args.sparsity_threshold)
+    edge_blocks = compute_edge_block(subgraphs, adj)
 
 # Model and optimizer
 # Step no. 1
@@ -78,8 +75,6 @@ model = GCN(nfeat=features.shape[1],
             dropout=args.dropout,
 			subgraphs=subgraphs,
             edge_blocks=edge_blocks,
-            sparsity_blocks=sparsity_blocks,
-            sparsity_threshold=args.sparsity_threshold,
             compute_gcn=args.gcn)
 optimizer = optim.Adam(model.parameters(),
                        lr=args.lr, weight_decay=args.weight_decay)

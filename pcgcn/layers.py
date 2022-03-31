@@ -11,7 +11,7 @@ class GraphConvolution(Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
 
-    def __init__(self, in_features, out_features, subgraphs, edge_blocks, sparsity_blocks, sparsity_threshold, compute_gcn, bias=True):
+    def __init__(self, in_features, out_features, subgraphs, edge_blocks, compute_gcn, bias=True):
 
         # Step no. 3 (twice --> 2 gcn layers)
 
@@ -21,8 +21,6 @@ class GraphConvolution(Module):
         self.out_features = out_features
         self.subgraphs = subgraphs
         self.edge_block = edge_blocks
-        self.sparsity_block = sparsity_blocks
-        self.sparsity_threshold = sparsity_threshold
         self.compute_gcn = compute_gcn
         self.weight = Parameter(torch.FloatTensor(in_features, out_features))
         if bias:
@@ -77,11 +75,8 @@ class GraphConvolution(Module):
             for k in range(len(self.subgraphs)):
                 # Gather and accumulate states from neighbor subgraphs
                 for i in range(len(self.subgraphs)):
-                    # calculate edge block (depending on its sparsity) & transform it to torch
-                    if(self.sparsity_block[k*len(self.subgraphs)+i] > self.sparsity_threshold):
-                        accumulation = (torch.spmm(self.edge_block[k*len(self.subgraphs)+i], support_subgraphs[i])).numpy()
-                    else:
-                        accumulation = (torch.mm(self.edge_block[k*len(self.subgraphs)+i], support_subgraphs[i])).numpy()
+                    # calculate edge block & transform it to torch
+                    accumulation = (torch.mm(self.edge_block[k*len(self.subgraphs)+i], support_subgraphs[i])).numpy()
                     # 3. Combine hidden states
                     agg_subgraphs = self.sum_mat(agg_subgraphs, accumulation, self.subgraphs[k])
             
