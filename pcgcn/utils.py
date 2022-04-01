@@ -136,7 +136,7 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
         # subgraph_i = i % len(subgraphs)
         # print("Sparsity of [" + str(subgraph_k) + "][" + str(subgraph_i) + "] -> " + str(sparsity_block[i]) + " = " + str(connectivity_block[i]) + "/(" + str(len(subgraphs[subgraph_k])) + "x" + str(len(subgraphs[subgraph_i])) + ").")
         
-        # If the sparsity (of edge_block[i]) is bigger than 60%, convert the given edge_block to sparse coo representation
+        # If the sparsity (of edge_block[i]) is bigger than sparsity_threshold, convert the given edge_block to sparse coo representation
         if(sparsity_block[i] > sparsity_threshold ):
             edge_block[i] = sparse_float_to_coo(edge_block[i])
 
@@ -299,8 +299,16 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     return torch.sparse.FloatTensor(indices, values, shape)
 
 def sparse_float_to_coo(sparse_float_mx):
-    print("Convert this edge block to sparse coo representation...")
-    # TODO: convertir float (dense) tensor to sparse coo tensor
+    indices = [[] for x in range(2)]
+    values = []
 
-    exit(1) 
-    return 0
+    for i in range(sparse_float_mx.shape[0]):
+        for j in range(sparse_float_mx.shape[1]):
+            if(sparse_float_mx[i][j] != 0):
+                indices[0].append(i)
+                indices[1].append(j)
+                values.append(sparse_float_mx[i][j].item())
+
+    sparse_coo_mx = torch.sparse_coo_tensor(indices, values, (sparse_float_mx.shape[0], sparse_float_mx.shape[1]))
+
+    return sparse_coo_mx
