@@ -285,6 +285,8 @@ def load_data(path="../data/cora/", dataset="cora"):
     idx_train = torch.LongTensor(idx_train)
     idx_val = torch.LongTensor(idx_val)
     idx_test = torch.LongTensor(idx_test)
+    
+    print_color(tcolors.OKGREEN, "\tDone !")
 
     return adj, features, labels, idx_train, idx_val, idx_test, dataset
 
