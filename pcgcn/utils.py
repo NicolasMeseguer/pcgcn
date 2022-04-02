@@ -93,12 +93,17 @@ def metis_partition(adj, nparts, datasetname):
     return partitions
 
 # Computes the edge block given the subgraphs and the adj matrix
-def compute_edge_block(subgraphs, adj):
+# 1. Make the edge_blocks & Calculate the sparsity for each one.
+#   2a. Low sparsity, keep the edge_block as it is (dense).
+#   2b. Notably high sparsity, then convert it to sparse representation (COO) and store it in the same idx.
+def compute_edge_block(subgraphs, adj, sparsity_threshold):
 
     adj_numpy = adj.to_dense().numpy()
 
-    # Array list to store the edge_blocks (should contain sparse and dense edge_blocks).
+    # Array list to store the edge_blocks.
     edge_block = []
+    sparsity_block = []
+    connectivity_block = []
 
     # Iterate over a subgraph
     for k in range(len(subgraphs)):
@@ -109,16 +114,33 @@ def compute_edge_block(subgraphs, adj):
             # Create a matrix of size (NodesK x NodesI) to store adj values
             sub_edge_block = np.zeros((len(subgraphs[k]), len(subgraphs[i])), dtype=float)
 
+            # Variables to check the sparsity
+            n_connections = 0
+            vertices_of_sk = len(subgraphs[k])
+            vertices_of_si = len(subgraphs[i])
+
             # Iterate over all the nodes of the subgraphs and for those with a value, store them.
             for x in range(len(subgraphs[k])):
                 for y in range(len(subgraphs[i])):
                     if(adj_numpy[subgraphs[k][x]][subgraphs[i][y]] != 0):
                         sub_edge_block[x][y] = adj_numpy[subgraphs[k][x]][subgraphs[i][y]]
+                        n_connections += 1
 
-            # Append the subgraph edge block to the array list
+            # Append the subgraph edge block to the array list and the corresponding sparsity
             edge_block.append(torch.FloatTensor(sub_edge_block))
+            sparsity_block.append( round((float(100) - ((n_connections/(vertices_of_sk*vertices_of_si))*100)), 2) )
+            connectivity_block.append(n_connections)
+    
+    for i in range(pow(len(subgraphs),2)):
+        # subgraph_k = int(i / len(subgraphs))
+        # subgraph_i = i % len(subgraphs)
+        # print("Sparsity of [" + str(subgraph_k) + "][" + str(subgraph_i) + "] -> " + str(sparsity_block[i]) + " = " + str(connectivity_block[i]) + "/(" + str(len(subgraphs[subgraph_k])) + "x" + str(len(subgraphs[subgraph_i])) + ").")
+        
+        # If the sparsity (of edge_block[i]) is bigger than sparsity_threshold, convert the given edge_block to sparse coo representation
+        if(sparsity_block[i] > sparsity_threshold ):
+            edge_block[i] = sparse_float_to_coo(edge_block[i])
 
-    return edge_block
+    return edge_block, sparsity_block
 
 def load_data(path="../data/cora/", dataset="cora"):
     """Load citation network dataset (cora only for now)"""
@@ -275,3 +297,18 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     values = torch.from_numpy(sparse_mx.data)
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
+
+def sparse_float_to_coo(sparse_float_mx):
+    indices = [[] for x in range(2)]
+    values = []
+
+    for i in range(sparse_float_mx.shape[0]):
+        for j in range(sparse_float_mx.shape[1]):
+            if(sparse_float_mx[i][j] != 0):
+                indices[0].append(i)
+                indices[1].append(j)
+                values.append(sparse_float_mx[i][j].item())
+
+    sparse_coo_mx = torch.sparse_coo_tensor(indices, values, (sparse_float_mx.shape[0], sparse_float_mx.shape[1]))
+
+    return sparse_coo_mx
