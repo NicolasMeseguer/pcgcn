@@ -37,20 +37,20 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 
   <details>
     <summary> Parameters allowed </summary>
-```
---no-cuda Runs the model on the CPU. Currently PCGCN does not work in GPU, WIP.
+      ```
+        --no-cuda Runs the model on the CPU. Currently PCGCN does not work in GPU, WIP.
 
---epochs Determines the amount of epochs to train the model (default 200).
+        --epochs Determines the amount of epochs to train the model (default 200).
 
---nparts Determines the amount of subgraphs to be generated (default 1). 
+        --nparts Determines the amount of subgraphs to be generated (default 1). 
 
---partition Determines the partition algorithm. If not specified, the partition will be randomly made.
-Possible values accepted: ['metis']
+        --partition Determines the partition algorithm. If not specified, the partition will be randomly made.
+        Possible values accepted: ['metis']
 
---sparsity_threshold Determines from which value the edge blocks will be computed in sparse format (default is 60).
+        --sparsity_threshold Determines from which value the edge blocks will be computed in sparse format (default is 60).
 
---gcn Runs the GCN in the default implementation.
-```
+        --gcn Runs the GCN in the default implementation.
+    ```
   </details>
 
 ## Uninstall
