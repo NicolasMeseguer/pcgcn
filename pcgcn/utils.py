@@ -24,6 +24,9 @@ class tcolors:
 def print_color(color, msg):
     print(color + str(msg) + tcolors.ENDC)
 
+def print_color_return(color, msg):
+    return color + str(msg) + tcolors.ENDC
+
 def encode_onehot(labels):
     classes = set(labels)
     classes_dict = {c: np.identity(len(classes))[i, :] for i, c in
