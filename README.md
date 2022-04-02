@@ -20,6 +20,10 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 
 ## Installation
 
+0. Clone the repo
+   1. ```$ git clone https://github.com/NicolasMeseguer/pcgcn``` :open_file_folder: Clone the repo to local.
+   2. ```$ cd pcgcn``` :point_right: Move to the PCGCN root dir.
+
 1. Install METIS
    1. ```$ cd metis-5.1.0/``` :point_right: Move to the METIS dir.
    2. ```$ make config cc=gcc prefix=../../../metis``` :wrench: Configure METIS passing options to the Makefile.
