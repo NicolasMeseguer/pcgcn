@@ -67,8 +67,9 @@ if not args.gcn:
     else:
         subgraphs = random_partition(int(adj.shape[0]), args.nparts)
 
-    # based on the subgraphs and the adj matrix, get the edgeblocks.
-    edge_blocks = compute_edge_block(subgraphs, adj, args.sparsity_threshold)
+    # based on the subgraphs and the adj matrix, get the edgeblocks (the edge_blocks representation can be either dense (float tensor) or sparse (coo tensor)).
+    print("Computing edge blocks...")
+    edge_blocks, sparsity_blocks = compute_edge_block(subgraphs, adj, args.sparsity_threshold)
 
 # Model and optimizer
 # Step no. 1
