@@ -32,11 +32,13 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 
 ## Usage
 
-  1. ```$ make run``` :running: Executes the model with default parameters (check the Makefile).
-  2. ```$ python pcgcn/train.py``` :hand: Manually load the model without parameters.
+  Run the model in two different ways:
+
+  * ```$ make run``` :running: Executes the model with **default parameters** (check the Makefile).
+  * ```$ python pcgcn/train.py``` :hand: Manually load the model **without parameters**.
 
   <details>
-    <summary> Parameters allowed </summary>
+    <summary> Click ME to see the allowed parameters! </summary>
 
     --no-cuda                - Runs the model on the CPU. Currently PCGCN does not work in GPU, WIP.
     --epochs X               - Determines the amount of epochs to train the model (default 200).
@@ -45,6 +47,18 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
                                Where 'algorithm' can be one of the following values: 'metis'
     --sparsity_threshold X   - Determines the max. value of sparsity for edge_blocks (default is 60).
     --gcn                    - Runs the GCN with the default implementation.
+
+    Example #1:
+      python pcgcn/train.py --no-cuda --epochs 100 --nparts 8 --sparsity_threshold 80
+      (Runs PCGCN on the CPU with 100 epochs; randomly partitions the graph into 8 subgraphs and for those with a sparsity bigger than 80, will use sparse representation.)
+  
+    Example #2:
+      python pcgcn/train.py --no-cuda --partition metis --epochs 50 --nparts 16 --sparsity_threshold 50
+      (Runs PCGCN on the CPU with 50 epochs; using METIS as the partitioning algortithm, partitions the graph into 16 subgraphs and for those with a sparsity bigger than 50, will use sparse representation.)
+
+    Example #3:
+      python pcgcn/train.py --gcn --epochs 50
+      (Runs the default GCN on the GPU with 50 epochs. No partitioning is done!)
   </details>
 
 ## Uninstall
