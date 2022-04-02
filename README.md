@@ -30,7 +30,7 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
    3. ```$ make install``` :arrow_down: Installs METIS on pcgcn folder.
 
 2. Compile PCGCN
-   1. ```$ cd /pcgcn``` :point_right: Move to PCGCN root dir.
+   1. ```$ cd ..``` :point_right: Move to PCGCN root dir.
    2. ```$ python requirements.py``` :wrench: Quickly check requirements.
    3. ```$ make install``` :arrow_down: Compiles and installs the PCGCN module.
 
