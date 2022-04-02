@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pcgcn.utils import load_data, accuracy, random_partition, metis_partition, compute_edge_block
+from pcgcn.utils import load_data, accuracy, random_partition, metis_partition, compute_edge_block, tcolors, print_color
 from pcgcn.models import GCN
 
 # Training settings
@@ -35,8 +35,8 @@ parser.add_argument('--sparsity_threshold', type=float, default=60.00,
                     help='Determines the maximum sparsity for each edge block.')
 parser.add_argument('--gcn', action='store_true', default=False,
                     help='Execute using GCN.')
-parser.add_argument('--metis', action='store_true', default=False,
-                    help='Partitions the graph using METIS.')
+parser.add_argument('--partition', type=str, default="",
+                    help='Determines the partition algorithm')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -44,7 +44,10 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 # CUDA Available
 if not args.cuda:
     print("Running WITHOUT CUDA, is it Available ?", end =" ")
-    print(torch.cuda.is_available())
+    if torch.cuda.is_available():
+        print_color(tcolors.OKGREEN, torch.cuda.is_available())
+    else:
+        print_color(tcolors.FAIL, "False")
 
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
@@ -62,14 +65,16 @@ if not args.gcn:
     print("Partitioning graph...")
 
     # partitions the graph into args.nparts
-    if args.metis:
+    if args.partition.lower() == "metis":
         subgraphs = metis_partition(adj, args.nparts, datasetname)
     else:
         subgraphs = random_partition(int(adj.shape[0]), args.nparts)
+    print_color(tcolors.OKGREEN, "\tDone !")
 
     # based on the subgraphs and the adj matrix, get the edgeblocks (the edge_blocks representation can be either dense (float tensor) or sparse (coo tensor)).
-    print("Computing edge blocks...")
+    print_color(tcolors.OKCYAN, "\tComputing edge blocks...")
     edge_blocks, sparsity_blocks = compute_edge_block(subgraphs, adj, args.sparsity_threshold)
+    print_color(tcolors.OKGREEN, "\tDone !")
 
 # Model and optimizer
 # Step no. 1
@@ -146,7 +151,7 @@ def test():
 t_total = time.time()
 for epoch in range(args.epochs):
     train(epoch)
-print("Optimization Finished!")
+print_color(tcolors.OKGREEN, "Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
 # Testing

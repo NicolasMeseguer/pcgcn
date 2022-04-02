@@ -10,6 +10,20 @@ from random import randrange
 # print full size of matrices
 np.set_printoptions(threshold=np.inf)
 
+class tcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def print_color(color, msg):
+    print(color + str(msg) + tcolors.ENDC)
+
 def encode_onehot(labels):
     classes = set(labels)
     classes_dict = {c: np.identity(len(classes))[i, :] for i, c in
@@ -20,6 +34,7 @@ def encode_onehot(labels):
 
 # Random partition. Subgraphs are not balanced, one may have more load than another
 def random_partition(nvectors, nparts):
+    print_color(tcolors.OKCYAN, "\tRandomly partitioning the graph...")
     partitions = [[] for x in range(nparts)]
     for i in range(nvectors):
         partitions[randrange(nparts)].append(i)
@@ -33,7 +48,7 @@ def metis_partition(adj, nparts, datasetname):
 
     # If the dataset is not transformed to METIS then, do it
     if not os.path.isfile(graphpath):
-        print("Converting to METIS...")
+        print_color(tcolors.OKCYAN, "\tConverting to METIS...")
 
         adj_numpy = adj.to_dense().numpy()
         nvectors = int(adj.shape[0])
@@ -57,10 +72,10 @@ def metis_partition(adj, nparts, datasetname):
     metispath = "../metis/bin/gpmetis"
 
     if not os.path.isfile(metispath):
-        print("You MUST install METIS in order to use '--metis' as the partitioning algorithm.\nExiting now...")
+        print_color(tcolors.FAIL, "\tYou MUST install METIS in order to use '--metis' as the partitioning algorithm.\nExiting now..." )
         exit(1)
     
-    print("Calling METIS...")
+    print_color(tcolors.OKCYAN, "\tCalling METIS...")
     subprocess.Popen([metispath, graphpath, str(nparts)], stdout = subprocess.PIPE)
 
     # Process the METIS output
@@ -68,7 +83,7 @@ def metis_partition(adj, nparts, datasetname):
     time.sleep(1)
 
     if not os.path.isfile(outputpath):
-        print("METIS output not found, even when it was executed...\nExiting now...")
+        print_color(tcolors.FAIL, "\tMETIS output not found, even when it was executed...\nExiting now...")
         exit(1)
     
     graphfile = open(outputpath, "r")
@@ -87,8 +102,6 @@ def metis_partition(adj, nparts, datasetname):
     for line in fileDump:
         partitions[line].append(tmpVertex)
         tmpVertex += 1
-
-    print("Partitioning done!")
 
     return partitions
 
@@ -131,6 +144,7 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
             sparsity_block.append( round((float(100) - ((n_connections/(vertices_of_sk*vertices_of_si))*100)), 2) )
             connectivity_block.append(n_connections)
     
+    print_color(tcolors.OKCYAN, "\tComputing sparsity of edge blocks...")
     for i in range(pow(len(subgraphs),2)):
         # subgraph_k = int(i / len(subgraphs))
         # subgraph_i = i % len(subgraphs)
