@@ -36,7 +36,7 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
   2. ```$ python pcgcn/train.py``` :hand: Manually load the model without parameters.
 
   <details>
-    <summary>__Parameters allowed__</summary>
+    <summary> __Parameters allowed__ </summary>
       ```
 --no-cuda Runs the model on the CPU. Currently PCGCN does not work in GPU, WIP.
 
