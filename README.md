@@ -36,8 +36,8 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
   2. ```$ python pcgcn/train.py``` :hand: Manually load the model without parameters.
 
   <details>
-    <summary> __Parameters allowed__ </summary>
-      ```
+    <summary> Parameters allowed </summary>
+```
 --no-cuda Runs the model on the CPU. Currently PCGCN does not work in GPU, WIP.
 
 --epochs Determines the amount of epochs to train the model (default 200).
@@ -50,7 +50,7 @@ Possible values accepted: ['metis']
 --sparsity_threshold Determines from which value the edge blocks will be computed in sparse format (default is 60).
 
 --gcn Runs the GCN in the default implementation.
-      ```
+```
   </details>
 
 ## Uninstall
