@@ -2,7 +2,7 @@ install:
 	python setup.py install;
 
 run:
-	cd pcgcn; python train.py --no-cuda --epochs 4 --nparts 4 --partition metis --sparsity_threshold 60;
+	cd pcgcn; python train.py --no-cuda --dataset pubmed --gcn;
 
 clean:
 	python setup.py clean;

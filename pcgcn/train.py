@@ -35,8 +35,10 @@ parser.add_argument('--sparsity_threshold', type=float, default=60.00,
                     help='Determines the maximum sparsity for each edge block.')
 parser.add_argument('--gcn', action='store_true', default=False,
                     help='Execute using GCN.')
-parser.add_argument('--partition', type=str, default="",
+parser.add_argument('--partition', type=str, default="random",
                     help='Determines the partition algorithm')
+parser.add_argument('--dataset', type=str, default="cora",
+                    help='Input the dataset')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -54,8 +56,12 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
+# Dataset pre-process
+dataset_name = args.dataset.lower()
+dataset_path = "../data/" + dataset_name + "/"
+
 # Load data
-adj, features, labels, idx_train, idx_val, idx_test, datasetname = load_data()
+adj, features, labels, idx_train, idx_val, idx_test, datasetname = load_data(dataset_path ,dataset_name)
 
 # Start partitioning the graph
 subgraphs = None
@@ -67,8 +73,11 @@ if not args.gcn:
     # partitions the graph into args.nparts
     if args.partition.lower() == "metis":
         subgraphs = metis_partition(adj, args.nparts, datasetname)
-    else:
+    elif args.partition.lower() == "random":
         subgraphs = random_partition(int(adj.shape[0]), args.nparts)
+    else:
+        print_color(tcolors.FAIL, "\tNo partition algorithm selected !\nExiting now...")
+        exit(1)
     print_color(tcolors.OKGREEN, "\tDone !")
 
     # based on the subgraphs and the adj matrix, get the edgeblocks (the edge_blocks representation can be either dense (float tensor) or sparse (coo tensor)).

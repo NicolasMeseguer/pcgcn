@@ -172,75 +172,114 @@ def load_data(path="../data/cora/", dataset="cora"):
 
     print('Loading {} dataset...'.format(dataset))
 
-    # extract content (all) from cora (.content) and store it in a str matrix
-    idx_features_labels = np.genfromtxt("{}{}.content".format(path, dataset),
-                                        dtype=np.dtype(str))
+    if dataset == "cora":
+        # extract content (all) from cora (.content) and store it in a str matrix
+        idx_features_labels = np.genfromtxt("{}{}.content".format(path, dataset),
+                                            dtype=np.dtype(str))
 
-    # NOTE, matrix accesing [x, y]:
-    # x --> row
-    # y --> column
+        # NOTE, matrix accesing [x, y]:
+        # x --> row
+        # y --> column
 
-    # NOTE, slicing a matrix
-    # i.e. https://www.programiz.com/python-programming/matrix#matrix-slicing
-    # [:,:] = everything
-    # [4, :] = 4th row, all columns
-    # [:, 1,-1] = all rows, from columns 1 ... till the end, minus 1
-    # [:, -1] = all rows, and print last column
-        # NOTE, nth column is = -1... nth-1 is equal to -2... and so on
+        # NOTE, slicing a matrix
+        # i.e. https://www.programiz.com/python-programming/matrix#matrix-slicing
+        # [:,:] = everything
+        # [4, :] = 4th row, all columns
+        # [:, 1,-1] = all rows, from columns 1 ... till the end, minus 1
+        # [:, -1] = all rows, and print last column
+            # NOTE, nth column is = -1... nth-1 is equal to -2... and so on
 
-    # extracts the features (all the content of the matrix) and represent it in CSR
-    features = sp.csr_matrix(idx_features_labels[:, 1:-1], dtype=np.float32)
+        # extracts the features (all the content of the matrix) and represent it in CSR
+        features = sp.csr_matrix(idx_features_labels[:, 1:-1], dtype=np.float32)
 
-    # extracts the final column with the labels (last column)
-    # and represents it in a onehot vector
-    labels = encode_onehot(idx_features_labels[:, -1])
+        # extracts the final column with the labels (last column)
+        # and represents it in a onehot vector
+        labels = encode_onehot(idx_features_labels[:, -1])
 
-    # extract the indices (column 0)
-    idx = np.array(idx_features_labels[:, 0], dtype=np.int32)
+        # extract the indices (column 0)
+        idx = np.array(idx_features_labels[:, 0], dtype=np.int32)
 
-    # --- start building the graph ---
+        # --- start building the graph ---
 
-    # index the indices
-    idx_map = {j: i for i, j in enumerate(idx)}
+        # index the indices
+        idx_map = {j: i for i, j in enumerate(idx)}
 
-    # extract content (all) from cora (.cites) and store it in a np (int) matrix
-    edges_unordered = np.genfromtxt("{}{}.cites".format(path, dataset),
-                                    dtype=np.int32)
+        # extract content (all) from cora (.cites) and store it in a np (int) matrix
+        edges_unordered = np.genfromtxt("{}{}.cites".format(path, dataset),
+                                        dtype=np.int32)
 
-    # converts the cora.cites so it uses the new indexes (the ones that idx_map assigned)
-    # map: it maps the function dict.get() using as input the variable edges_unordered.flatten()
-    edges = np.array(list(map(idx_map.get, edges_unordered.flatten())),
-                     dtype=np.int32).reshape(edges_unordered.shape)
+        # converts the cora.cites so it uses the new indexes (the ones that idx_map assigned)
+        # map: it maps the function dict.get() using as input the variable edges_unordered.flatten()
+        edges = np.array(list(map(idx_map.get, edges_unordered.flatten())),
+                        dtype=np.int32).reshape(edges_unordered.shape)
 
-    """ 
-        Until now; what we have.
+        """ 
+            Until now; what we have.
 
-        features    --> CSR Format (scipy sparse csr matrix)
-        labels      --> onehot-encoding format (numpy array)
-        edges:      --> updated with the idx_map (numpy array)
+            features    --> CSR Format (scipy sparse csr matrix)
+            labels      --> onehot-encoding format (numpy array)
+            edges:      --> updated with the idx_map (numpy array)
 
-        explanation:    (cora.content) the paper id (column 0) indexed in idx_map, so we have node 0(row0col0), node 1(row1col0), node n(rowncol0)
-                        once done, we associate it with the raw edges, and update them so it points to the new references (new indexes)
-    """
+            explanation:    (cora.content) the paper id (column 0) indexed in idx_map, so we have node 0(row0col0), node 1(row1col0), node n(rowncol0)
+                            once done, we associate it with the raw edges, and update them so it points to the new references (new indexes)
+        """
 
-    # transform the edge 2col array into a COO sparse matrix
-    # construct from three arrays like (each piece of data goes to 1 position (i, j)):
-    #       coo_matrix((data, (i, j)), 
-    #                   [shape=(M, N)])
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
-    adj = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
-                        shape=(labels.shape[0], labels.shape[0]),
-                        dtype=np.float32)
-    
-    # printing it in this way will show the idx of the papers (cora.cites with the new indexes)
-    # print(adj)
-    # easier to (adjacency matrix starting from [0][0]):
-    # print(adj.toarray())
+        # transform the edge 2col array into a COO sparse matrix
+        # construct from three arrays like (each piece of data goes to 1 position (i, j)):
+        #       coo_matrix((data, (i, j)), 
+        #                   [shape=(M, N)])
+        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html
+        adj = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
+                            shape=(labels.shape[0], labels.shape[0]),
+                            dtype=np.float32)
+        
+        # printing it in this way will show the idx of the papers (cora.cites with the new indexes)
+        # print(adj)
+        # easier to (adjacency matrix starting from [0][0]):
+        # print(adj.toarray())
 
-    # assume this will make a COO matrix symmetric
-    # build symmetric adjacency matrix
-    # NOTE: why does it make it symmetric?
-    adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+        # assume this will make a COO matrix symmetric
+        # build symmetric adjacency matrix
+        # NOTE: why does it make it symmetric?
+        adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+
+    elif dataset == "pubmed":
+        # Adj matrix
+        with open(path + 'pubmed_adjacency.txt', 'r') as f:
+            matrix_size = f.readline()
+            matrix_size = matrix_size.split(" ")
+
+            edges = [[int(num) for num in line.split(',')] for line in f]
+            edges = np.array(edges)
+
+        adj = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
+                            shape=(int(matrix_size[0]), int(matrix_size[1])),
+                            dtype=np.float32)
+
+        # Features data
+        with open(path + 'pubmed_features.txt', 'r') as f:
+            matrix_size = f.readline()
+            matrix_size = matrix_size.split(" ")
+
+            edges = [[int(num) for num in line.split(',')] for line in f]
+            edges = np.array(edges)
+        
+        with open(path + 'pubmed_features_data.txt', 'r') as f:
+            values = [float(line.rstrip("\n")) for line in f]
+            values = np.array(values)
+
+        features = sp.csr_matrix((values, (edges[:, 0], edges[:, 1])),
+                                shape=(int(matrix_size[0]), int(matrix_size[1])),
+                                dtype=np.float32)
+
+        # Labels data
+        with open(path + 'pubmed_labels.txt', 'r') as f:
+            labels = [[int(num) for num in line.split(',')] for line in f]
+            labels = np.array(labels)
+
+    ###################################
+    ### NOW COMES THE POSTPROCESS ! ###
+    ###################################
 
     # addition of an identity matrix of the same size (npapers*npapers)
     # then normalize it
