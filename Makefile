@@ -2,7 +2,10 @@ install:
 	python setup.py install;
 
 run:
-	cd pcgcn; python train.py --no-cuda --dataset pubmed --gcn;
+	cd pcgcn; python train.py --no-cuda --dataset citeseer --epochs 500 --gcn;
+
+runtest:
+	echo "Here you can submit the python script several times, and output the exit to a txt file..."
 
 clean:
 	python setup.py clean;

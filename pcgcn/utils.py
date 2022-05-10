@@ -53,21 +53,28 @@ def metis_partition(adj, nparts, datasetname):
     if not os.path.isfile(graphpath):
         print_color(tcolors.OKCYAN, "\tConverting to METIS...")
 
+        flag_remove_one_value = 0
+        nedges = int(adj._nnz()/2)
+        if(int(adj._nnz()) % 2 != 0):
+            # If the number of edges is odd (impar), remove one edge (random at the moment).
+            flag_remove_one_value = 1
+            print_color(tcolors.WARNING, "\tWARNING: The first edge [0][0] will be removed...\n\tNumber of edges is odd.")
+
         adj_numpy = adj.to_dense().numpy()
         nvectors = int(adj.shape[0])
         
         content = ""
-        nedges = 0
-        for i in range(nvectors):
+        for i in range(int(adj.shape[0])):
             linetowrite = ""
-            for j in range(nvectors):
-                if(adj_numpy[i][j] != 0):
-                    linetowrite += str(j + 1) + " "
-                    nedges += 1
+            for j in range(int(adj.shape[1])):
+                if(adj_numpy[i][j] != 0.0):
+                    if(flag_remove_one_value == 0):
+                        linetowrite += str(j + 1) + " "
+                    flag_remove_one_value = 0
             content += linetowrite.rstrip() + "\n"
 
         graphfile = open(graphpath, "w")
-        graphfile.write(str(nvectors) + " " + str(int(nedges/2)) + "\n")
+        graphfile.write(str(nvectors) + " " + str(nedges) + "\n")
         graphfile.write(content)
         graphfile.close()
     
@@ -75,7 +82,7 @@ def metis_partition(adj, nparts, datasetname):
     metispath = "../metis/bin/gpmetis"
 
     if not os.path.isfile(metispath):
-        print_color(tcolors.FAIL, "\tYou MUST install METIS in order to use '--metis' as the partitioning algorithm.\nExiting now..." )
+        print_color(tcolors.FAIL, "\tYou MUST install METIS in order to use 'metis' as the partitioning algorithm.\nExiting now..." )
         exit(1)
     
     print_color(tcolors.OKCYAN, "\tCalling METIS...")
@@ -243,9 +250,9 @@ def load_data(path="../data/cora/", dataset="cora"):
         # NOTE: why does it make it symmetric?
         adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
 
-    elif dataset == "pubmed":
+    elif dataset == "pubmed" or dataset == "citeseer":
         # Adj matrix
-        with open(path + 'pubmed_adjacency.txt', 'r') as f:
+        with open(path + dataset + '_adjacency.txt', 'r') as f:
             matrix_size = f.readline()
             matrix_size = matrix_size.split(" ")
 
@@ -257,14 +264,14 @@ def load_data(path="../data/cora/", dataset="cora"):
                             dtype=np.float32)
 
         # Features data
-        with open(path + 'pubmed_features.txt', 'r') as f:
+        with open(path + dataset + '_features.txt', 'r') as f:
             matrix_size = f.readline()
             matrix_size = matrix_size.split(" ")
 
             edges = [[int(num) for num in line.split(',')] for line in f]
             edges = np.array(edges)
         
-        with open(path + 'pubmed_features_data.txt', 'r') as f:
+        with open(path + dataset + '_features_data.txt', 'r') as f:
             values = [float(line.rstrip("\n")) for line in f]
             values = np.array(values)
 
@@ -273,9 +280,13 @@ def load_data(path="../data/cora/", dataset="cora"):
                                 dtype=np.float32)
 
         # Labels data
-        with open(path + 'pubmed_labels.txt', 'r') as f:
+        with open(path + dataset + '_labels.txt', 'r') as f:
             labels = [[int(num) for num in line.split(',')] for line in f]
             labels = np.array(labels)
+    
+    else:
+        print_color(tcolors.FAIL, "\tThe specified dataset does not exist\nExiting now..." )
+        exit(1)
 
     ###################################
     ### NOW COMES THE POSTPROCESS ! ###

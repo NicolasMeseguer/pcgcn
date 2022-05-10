@@ -12,11 +12,16 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
 ## Requirements
 
 * C compiler that supports the C99 standard (e.g. gcc 7.5.0).
-* CMake 2.8
+* CMake 2.8 or above.
 * Python 3.6.x (rec. 15)
    * NumPy 1.19.5
    * PyTorch 1.2.0
    * SciPy 1.5.4
+
+The dependencies of Pythan can be easily installed running the following command:
+```
+python -m pip install -r requirements.txt
+```
 
 ## Installation
 
@@ -45,13 +50,13 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
     <summary> Click ME to see the allowed parameters! </summary>
 
     --no-cuda                - Runs the model on the CPU. Currently PCGCN does not work in GPU, WIP.
-    --dataset 'name'         - Determines the dataset to be used. 
-                               Where 'name' can be one ot the following values: 'cora' and 'pubmed'.
+    --dataset 'name'         - Determines the dataset to be used (default 'cora').
+                               Where 'name' can be one ot the following values: 'cora', 'pubmed' and 'citeseer'.
     --epochs X               - Determines the amount of epochs to train the model (default 200).
     --nparts X               - Determines the amount of subgraphs to be generated (default 1). 
-    --partition 'algorithm'  - Determines the partition algorithm (default random_partition).
+    --partition 'algorithm'  - Determines the partition algorithm (default 'random').
                                Where 'algorithm' can be one of the following values: 'metis' and 'random'.
-    --sparsity_threshold X   - Determines the max. value of sparsity for edge_blocks (default is 60).
+    --sparsity_threshold X   - Determines the max. value of sparsity for edge_blocks (default is 60%).
     --gcn                    - Runs the GCN with the default implementation.
 
     Example #1:
@@ -121,3 +126,9 @@ Please cite this paper if you use any of this (code) in your own work:
   year={1999}
 }
 ```
+
+## Bugs & Future Work
+
+1. If a dataset (graph) is NOT undirected, METIS cannot partition it (i.e. graphs in which for each edge (v,u) there is not an edge (u,v)).
+2. Converting graph to METIS output (dataset.graph) using sparse representation not dense (faster).
+2. Computing of subgraphs (edge_blocks) refactor to sparse (it'll be faster).
