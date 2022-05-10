@@ -18,7 +18,7 @@ This implementation makes use of the Cora dataset from [2], more datasets are ex
    * PyTorch 1.2.0
    * SciPy 1.5.4
 
-The dependencies of Pythan can be easily installed running the following command:
+The dependencies of Python can be easily installed running the following command:
 ```
 python -m pip install -r requirements.txt
 ```
