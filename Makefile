@@ -11,4 +11,4 @@ clean:
 	python setup.py clean;
 
 distclean:
-	python setup.py clean; rm -rf build; rm -rf dist; rm -rf pcgcn.egg-info; rm -rf metis;
+	python setup.py clean; rm -rf build; rm -rf dist; rm -rf pcgcn.egg-info; rm -rf metis; rm data/graphlaxy/*.graph

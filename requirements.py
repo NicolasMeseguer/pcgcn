@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy as np
 import torch
 import scipy
@@ -36,5 +37,21 @@ if(scipy_ver == "1.5.4"):
 else:
     print('SciPy  version: ' + scipy_ver + '\t| ' + print_color_return(tcolors.FAIL, "Error") + '.')
     exit(0)
+
+# Check if pyconfig.h exists in /Include
+pyconfig_location = (sys.executable).replace('python', 'Include/pyconfig.h')
+if(not os.path.exists(pyconfig_location)):
+    print("Graphlaxy can't be used | " + print_color_return(tcolors.FAIL, "ERROR") + ".")
+    install = input("Do you want to be able to use it? (Y/n)  ")
+
+    # Copies pyconfig.h to /Include dir
+    if(install == 'Y'):
+        copy_string = "cp " + pyconfig_location.replace('Include/', '') + " " + pyconfig_location.replace('/pyconfig.h', '')
+        os.system(copy_string)
+        print('Graphlaxy can be used \t| ' + print_color_return(tcolors.OKGREEN, "Success") + '.')
+        print("Check the README, Section 'Bugs & Future Work' bullet 0, for further information about this action.")
+
+else:
+    print('Graphlaxy can be used \t| ' + print_color_return(tcolors.OKGREEN, "Success") + '.')
 
 exit(1)
