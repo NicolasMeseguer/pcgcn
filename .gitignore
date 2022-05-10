@@ -6,3 +6,4 @@
 *.graph*
 *.pyc
 /*.txt
+!requirements.txt
