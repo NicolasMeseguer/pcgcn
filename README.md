@@ -55,7 +55,7 @@ Run the model in two different ways:
 * `$ make run` :running: Executes the model with **default parameters** (have a look at the Makefile).
 * `$ python pcgcn/train.py <parameters>` :hand: Manually load the model **without parameters**.
 
-<details>
+<details markdown="1">
   <summary> Click ME to see the allowed parameters! </summary>
 
   --no-cuda                - Runs the model on the CPU. Currently PCGCN does not work in GPU, WIP.
@@ -71,6 +71,7 @@ Run the model in two different ways:
   --partition 'algorithm'  - Determines the partition algorithm (default 'random').
                               Where 'algorithm' can be one of the following values: 'metis' and 'random'.
   --sparsity_threshold X   - Determines the max. value of sparsity for edge_blocks (default is 60%).
+
 </details>
 
   Here you can find some examples on how to execute the model using some parameters:
