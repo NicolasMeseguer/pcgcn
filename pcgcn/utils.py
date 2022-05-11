@@ -4,12 +4,70 @@ import torch
 import os.path
 import subprocess
 import time
+import sys
+import random
 
 from random import randrange
 
 # print full size of matrices
 np.set_printoptions(threshold=np.inf)
 
+def random_name():
+    animal = get_animals_dic()
+    animal = animal[random.randint(0, len(animal)-1)]
+    color = get_color_dic()
+    color = color[random.randint(0, len(color)-1)]
+
+    return color + '_' + animal + '.graph'
+
+def graphlaxy_generate(graphlaxy_edges):
+
+    # Transform the input edges
+    comma_idx = graphlaxy_edges.index(',')
+    edge_min = graphlaxy_edges[0:comma_idx]
+    edge_max = graphlaxy_edges[comma_idx+1:]
+
+    # Get user's python bin
+    python_bin = sys.executable
+    graphlaxy_location = '../graphlaxy/'
+
+    # Prepare CLI graphlaxy string
+    graphlaxy_parameters = '-f ' + graphlaxy_location + ' -s 1 -e ' + edge_min + ' ' + edge_max
+
+    # Complete graphlaxy command
+    command = python_bin + ' ' + graphlaxy_location + 'GraphlaxyDataGen.py generate ' + graphlaxy_parameters
+
+    # Call graphlaxy
+    graphlaxy = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
+    graphlaxy.wait()
+
+    # Copy the graph to PCGCN data
+    graph_path = '../data/graphlaxy/'
+    dataset_name = random_name()
+
+    # Ensure that random name is not already been used
+    while(os.path.exists(graph_path + dataset_name)):
+        dataset_name = random_name()
+
+    # Prepare paths
+    graph_path += dataset_name
+    current_path = graphlaxy_location + 'graphs/RMAT_0.txt'
+
+    command = 'mv ' + current_path + ' ' + graph_path
+
+    # Move the graph
+    move_command = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
+    move_command.wait()
+
+    print_color(tcolors.OKBLUE, "Graphlaxy has generated the graph:")
+    print_color(tcolors.OKGREEN, "\t\t\t" + dataset_name + "\n")
+
+    return dataset_name
+
+def graphlaxy_search(graphlaxy_dataset):
+    return 0, 0, 0, 0, 0, 0, graphlaxy_dataset
+
+# Print useful messages in different colors
 class tcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -86,7 +144,7 @@ def metis_partition(adj, nparts, datasetname):
         exit(1)
     
     print_color(tcolors.OKCYAN, "\tCalling METIS...")
-    subprocess.Popen([metispath, graphpath, str(nparts)], stdout = subprocess.PIPE)
+    subprocess.Popen([metispath, graphpath, str(nparts)], shell=True, stdout = subprocess.PIPE)
 
     # Process the METIS output
     outputpath = "../data/" + str(datasetname) + "/" + str(datasetname) + ".graph.part." + str(nparts)
@@ -381,3 +439,231 @@ def sparse_float_to_coo(sparse_float_mx):
     sparse_coo_mx = torch.sparse_coo_tensor(indices, values, (sparse_float_mx.shape[0], sparse_float_mx.shape[1]))
 
     return sparse_coo_mx
+
+def get_animals_dic():
+    return (
+        "Aardvark",
+        "Albatross",
+        "Alligator",
+        "Alpaca",
+        "Ant",
+        "Anteater",
+        "Antelope",
+        "Ape",
+        "Armadillo",
+        "Donkey",
+        "Baboon",
+        "Badger",
+        "Barracuda",
+        "Bat",
+        "Bear",
+        "Beaver",
+        "Bee",
+        "Bison",
+        "Boar",
+        "Buffalo",
+        "Butterfly",
+        "Camel",
+        "Capybara",
+        "Caribou",
+        "Cassowary",
+        "Cat",
+        "Caterpillar",
+        "Cattle",
+        "Chamois",
+        "Cheetah",
+        "Chicken",
+        "Chimpanzee",
+        "Chinchilla",
+        "Chough",
+        "Clam",
+        "Cobra",
+        "Cockroach",
+        "Cod",
+        "Cormorant",
+        "Coyote",
+        "Crab",
+        "Crane",
+        "Crocodile",
+        "Crow",
+        "Curlew",
+        "Deer",
+        "Dinosaur",
+        "Dog",
+        "Dogfish",
+        "Dolphin",
+        "Dotterel",
+        "Dove",
+        "Dragonfly",
+        "Duck",
+        "Dugong",
+        "Dunlin",
+        "Eagle",
+        "Echidna",
+        "Eel",
+        "Eland",
+        "Elephant",
+        "Elk",
+        "Emu",
+        "Falcon",
+        "Ferret",
+        "Finch",
+        "Fish",
+        "Flamingo",
+        "Fly",
+        "Fox",
+        "Frog",
+        "Gaur",
+        "Gazelle",
+        "Gerbil",
+        "Giraffe",
+        "Gnat",
+        "Gnu",
+        "Goat",
+        "Goldfinch",
+        "Goldfish",
+        "Goose",
+        "Gorilla",
+        "Goshawk",
+        "Grasshopper",
+        "Grouse",
+        "Guanaco",
+        "Gull",
+        "Hamster",
+        "Hare",
+        "Hawk",
+        "Hedgehog",
+        "Heron",
+        "Herring",
+        "Hippopotamus",
+        "Hornet",
+        "Horse",
+        "Human",
+        "Hummingbird",
+        "Hyena",
+        "Ibex",
+        "Ibis",
+        "Jackal",
+        "Jaguar",
+        "Jay",
+        "Jellyfish",
+        "Kangaroo",
+        "Kingfisher",
+        "Koala",
+        "Kookabura",
+        "Kouprey",
+        "Kudu",
+        "Lapwing",
+        "Lark",
+        "Lemur",
+        "Leopard",
+        "Lion",
+        "Llama",
+        "Lobster",
+        "Locust",
+        "Loris",
+        "Louse",
+        "Lyrebird",
+        "Magpie",
+        "Mallard",
+        "Manatee",
+        "Mandrill",
+        "Mantis",
+        "Marten",
+        "Meerkat",
+        "Mink",
+        "Mole",
+        "Mongoose",
+        "Monkey",
+        "Moose",
+        "Mosquito",
+        "Mouse",
+        "Mule",
+        "Narwhal",
+        "Newt",
+        "Nightingale",
+        "Octopus",
+        "Okapi",
+        "Opossum",
+        "Oryx",
+        "Ostrich",
+        "Otter",
+        "Owl",
+        "Oyster",
+        "Panther",
+        "Parrot",
+        "Partridge",
+        "Peafowl",
+        "Pelican",
+        "Penguin",
+        "Pheasant",
+        "Pig",
+        "Pigeon",
+        "Pony",
+        "Porcupine",
+        "Porpoise",
+        "Quail",
+        "Quelea",
+        "Quetzal",
+        "Rabbit",
+        "Raccoon",
+        "Rail",
+        "Ram",
+        "Rat",
+        "Raven",
+        "Reindeer",
+        "Rhinoceros",
+        "Rook",
+        "Salamander",
+        "Salmon",
+        "Sandpiper",
+        "Sardine",
+        "Scorpion",
+        "Seahorse",
+        "Seal",
+        "Shark",
+        "Sheep",
+        "Shrew",
+        "Skunk",
+        "Snail",
+        "Snake",
+        "Sparrow",
+        "Spider",
+        "Spoonbill",
+        "Squid",
+        "Squirrel",
+        "Starling",
+        "Stingray",
+        "Stinkbug",
+        "Stork",
+        "Swallow",
+        "Swan",
+        "Tapir",
+        "Tarsier",
+        "Termite",
+        "Tiger",
+        "Toad",
+        "Trout",
+        "Turkey",
+        "Turtle",
+        "Viper",
+        "Vulture",
+        "Wallaby",
+        "Walrus",
+        "Wasp",
+        "Weasel",
+        "Whale",
+        "Wildcat",
+        "Wolf",
+        "Wolverine",
+        "Wombat",
+        "Woodcock",
+        "Woodpecker",
+        "Worm",
+        "Wren",
+        "Yak",
+        "Zebra"
+    )
+
+def get_color_dic():
+    return ("Red", "Blue", "Yellow", "Grey", "Black", "Purple", "Orange", "Pink", "Green", "Cyan", "White", "Silver", "Lime", "Teal", "Aqua", "Chocolate", "Gold", "Magenta", "Olive", "Turquoise")

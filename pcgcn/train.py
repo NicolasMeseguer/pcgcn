@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pcgcn.utils import load_data, accuracy, random_partition, metis_partition, compute_edge_block, tcolors, print_color
+from pcgcn.utils import load_data, accuracy, random_partition, metis_partition, compute_edge_block, tcolors, print_color, graphlaxy_generate, graphlaxy_search
 from pcgcn.models import GCN
 
 # Training settings
@@ -39,6 +39,8 @@ parser.add_argument('--partition', type=str, default="random",
                     help='Determines the partition algorithm')
 parser.add_argument('--dataset', type=str, default="cora",
                     help='Input the dataset')
+parser.add_argument('--graphlaxy', type=str, default="",
+                    help='Uses Graphlaxy as the dataset')             
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -56,12 +58,22 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
-# Dataset pre-process
-dataset_name = args.dataset.lower()
-dataset_path = "../data/" + dataset_name + "/"
+if args.graphlaxy != "":
+    graphlaxy_dataset = args.graphlaxy
 
-# Load data
-adj, features, labels, idx_train, idx_val, idx_test, datasetname = load_data(dataset_path ,dataset_name)
+    if ',' in graphlaxy_dataset:
+        graphlaxy_dataset = graphlaxy_generate(graphlaxy_dataset)
+        
+    adj, features, labels, idx_train, idx_val, idx_test, datasetname = graphlaxy_search(graphlaxy_dataset)
+else:
+    # Dataset pre-process
+    dataset_name = args.dataset.lower()
+    dataset_path = "../data/" + dataset_name + "/"
+
+    # Load data
+    adj, features, labels, idx_train, idx_val, idx_test, datasetname = load_data(dataset_path ,dataset_name)
+
+exit(1)
 
 # Start partitioning the graph
 subgraphs = None
