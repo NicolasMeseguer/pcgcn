@@ -2,7 +2,7 @@ install:
 	python setup.py install;
 
 run:
-	cd pcgcn; python train.py --no-cuda --graphlaxy 100,150 --epochs 500 --gcn;
+	cd pcgcn; python train.py --no-cuda --graphlaxy Silver_Butterfly --epochs 500 --gcn;
 
 runtest:
 	echo "Here you can submit the python script several times, and output the exit to a txt file..."

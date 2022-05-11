@@ -6,8 +6,7 @@ import subprocess
 import time
 import sys
 import random
-
-from random import randrange
+import networkx as nx
 
 # print full size of matrices
 np.set_printoptions(threshold=np.inf)
@@ -40,6 +39,9 @@ def graphlaxy_generate(graphlaxy_edges):
     # Call graphlaxy
     graphlaxy = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
     graphlaxy.wait()
+    if(graphlaxy.returncode != 0):
+        print_color(tcolors.FAIL, "Graphlaxy output was not the one expected.\nERxiting now...")
+        exit(1)
 
     # Copy the graph to PCGCN data
     graph_path = '../data/graphlaxy/'
@@ -65,7 +67,44 @@ def graphlaxy_generate(graphlaxy_edges):
     return dataset_name
 
 def graphlaxy_search(graphlaxy_dataset):
-    return 0, 0, 0, 0, 0, 0, graphlaxy_dataset
+
+    dataset = graphlaxy_dataset
+    graph_path = '../data/graphlaxy/'
+
+    # Check if the dataset name has the substring .graph
+    if not '.graph' in graphlaxy_dataset:
+        dataset += '.graph'
+    
+    # Check if the graph exists
+    if(not os.path.exists(graph_path + dataset)):
+        print_color(tcolors.FAIL, "The specified dataset: " + graphlaxy_dataset + " could not be found !\nExiting now...")
+        exit(1)
+    
+    # Read the graph and store it
+    with open(graph_path + dataset, 'r') as g:
+        edges = [[int(num)-1 for num in line.split()] for line in g]
+        edges = np.array(edges)
+
+    # Adj matrix
+    adj = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
+                            shape=(int(edges[edges.shape[0]-1, : 1,]+1), int(edges[edges.shape[0]-1, : 1,])+1),
+                            dtype=np.float32)
+
+    exit(1)
+
+    # creates 3 ranges, one for training, another one as values, and a final one for testing
+    idx_train = range(140)
+    idx_val = range(200, 500)
+    idx_test = range(500, 1500)
+
+    # creates arrays of length (range)
+    idx_train = torch.LongTensor(idx_train)
+    idx_val = torch.LongTensor(idx_val)
+    idx_test = torch.LongTensor(idx_test)
+    
+    print_color(tcolors.OKGREEN, "\tDone !")
+
+    return 0, 0, 0, idx_train, idx_val, idx_test, graphlaxy_dataset
 
 # Print useful messages in different colors
 class tcolors:
