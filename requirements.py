@@ -49,7 +49,7 @@ if(not os.path.exists(pyconfig_location)):
         copy_string = "cp " + pyconfig_location.replace('Include/', '') + " " + pyconfig_location.replace('/pyconfig.h', '')
         os.system(copy_string)
         print('Graphlaxy can be used \t| ' + print_color_return(tcolors.OKGREEN, "Success") + '.')
-        print("Check the README, Section 'Bugs & Future Work' bullet 0, for further information about this action.")
+        print("Check the README, Section 'Notes' bullet 1, for further information about this action.")
 
 else:
     print('Graphlaxy can be used \t| ' + print_color_return(tcolors.OKGREEN, "Success") + '.')

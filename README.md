@@ -116,6 +116,7 @@ If you still want to use the same datset but with different features and labels,
 ## Notes
 
 1. Make sure to recompile PCGCN, `$ make install`, whenever you change any module (i.e. layers, model, train, etc).
+2. [Graphlaxy @ requirements.py] Copies `pyconfig.h` from the local directory of Python into the `Include/` directory.
 
 ## References
 
@@ -161,7 +162,6 @@ Please cite this paper if you use any of this (code) in your own work:
 ```
 
 ## Bugs & Future Work
-0. [Graphlaxy @ requirements.py] Copies `pyconfig.h` from the local directory of Python into the `Include/` directory.
 1. If a dataset (graph) is NOT undirected, METIS cannot partition it (i.e. graphs in which for each edge (v,u) there is not an edge (u,v)).
 2. Converting graph to METIS output (dataset.graph) using sparse representation not dense (faster).
 3. Computing of subgraphs (edge_blocks) refactor to sparse (it'll be faster).
