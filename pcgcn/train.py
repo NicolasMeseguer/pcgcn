@@ -9,10 +9,10 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pcgcn.utils import load_data, accuracy, random_partition, metis_partition, compute_edge_block, tcolors, print_color, graphlaxy_generate, graphlaxy_search
+from pcgcn.utils import load_data, accuracy, random_partition, metis_partition, compute_edge_block, tcolors, print_color, print_color_return, graphlaxy_generate, graphlaxy_load
 from pcgcn.models import GCN
 
-# Training settings
+# Training settings + parameters
 parser = argparse.ArgumentParser()
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='Disables CUDA training.')
@@ -40,40 +40,50 @@ parser.add_argument('--partition', type=str, default="random",
 parser.add_argument('--dataset', type=str, default="cora",
                     help='Input the dataset')
 parser.add_argument('--graphlaxy', type=str, default="",
-                    help='Uses Graphlaxy as the dataset')             
+                    help='Uses Graphlaxy as the dataset')
 
+# Parse arguments
 args = parser.parse_args()
+
+# CUDA Check
+if not args.no_cuda:
+    if(not torch.cuda.is_available()):
+        print(print_color_return(tcolors.WARNING, "NOTE:") + " You tried using CUDA, but is " + print_color_return(tcolors.FAIL, "NOT") + " available... automatically turning it off. You can use '--no-cuda' to hide this error.")
+elif torch.cuda.is_available():
+    print("Running " + print_color_return(tcolors.WARNING, "WITHOUT CUDA") + ", but it's " + print_color_return(tcolors.OKGREEN, "available") + ".")
+
+# Enable CUDA if it's available and the user didn't say otherwise
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-# CUDA Available
-if not args.cuda:
-    print("Running WITHOUT CUDA, is it Available ?", end =" ")
-    if torch.cuda.is_available():
-        print_color(tcolors.OKGREEN, torch.cuda.is_available())
-    else:
-        print_color(tcolors.FAIL, "False")
+# Multithreaded model ?
+# WIP
+multith = False
+args.cuda = False
 
+# Random seed
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
+# Load Data
+print("Processing dataset... ")
 if args.graphlaxy != "":
+
     graphlaxy_dataset = args.graphlaxy
 
+    # If it has a comma, the user wants to generate a new one
     if ',' in graphlaxy_dataset:
         graphlaxy_dataset = graphlaxy_generate(graphlaxy_dataset)
-        
-    adj, features, labels, idx_train, idx_val, idx_test, datasetname = graphlaxy_search(graphlaxy_dataset)
+    
+    # Generate the graph info using the name of the dataset + other parameters
+    adj, features, labels, idx_train, idx_val, idx_test, datasetname = graphlaxy_load(graphlaxy_dataset)
 else:
     # Dataset pre-process
     dataset_name = args.dataset.lower()
     dataset_path = "../data/" + dataset_name + "/"
 
-    # Load data
     adj, features, labels, idx_train, idx_val, idx_test, datasetname = load_data(dataset_path ,dataset_name)
-
-exit(1)
 
 # Start partitioning the graph
 subgraphs = None
@@ -121,7 +131,7 @@ if args.cuda and args.gcn:
     idx_val = idx_val.cuda()
     idx_test = idx_test.cuda()
 elif args.cuda and not args.gcn:
-    print("-- PCGCN not avaiable on CUDA (yet) --")
+    print("-- PCGCN not available on CUDA (yet) --")
     exit(1)
 else:
     print("-- Running on CPU --")
