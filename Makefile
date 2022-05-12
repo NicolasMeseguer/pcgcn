@@ -2,7 +2,7 @@ install:
 	python setup.py install;
 
 run:
-	cd pcgcn; python train.py --no-cuda --dataset citeseer --epochs 500 --gcn;
+	cd pcgcn; python train.py --no-cuda --graphlaxy 1000,1000 --epochs 500 --partition metis --nparts 4;
 
 runtest:
 	echo "Here you can submit the python script several times, and output the exit to a txt file..."

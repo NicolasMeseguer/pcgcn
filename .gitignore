@@ -6,4 +6,6 @@
 *.graph*
 *.pyc
 /*.txt
+/graphlaxy/dataset_description.csv
+/graphlaxy/graphs
 !requirements.txt

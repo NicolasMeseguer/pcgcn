@@ -4,12 +4,208 @@ import torch
 import os.path
 import subprocess
 import time
-
-from random import randrange
+import sys
+import random
+import networkx as nx
 
 # print full size of matrices
 np.set_printoptions(threshold=np.inf)
 
+def random_name():
+    animal = get_animals_dic()
+    animal = animal[random.randint(0, len(animal)-1)]
+    color = get_color_dic()
+    color = color[random.randint(0, len(color)-1)]
+
+    return color + '_' + animal + '.glaxy'
+
+def graphlaxy_generate(graphlaxy_edges):
+    print("\tCalling Graphlaxy...")
+
+    # Transform the input edges
+    comma_idx = graphlaxy_edges.index(',')
+    edge_min = graphlaxy_edges[0:comma_idx]
+    edge_max = graphlaxy_edges[comma_idx+1:]
+
+    # Get user's python bin
+    python_bin = sys.executable
+    graphlaxy_location = '../graphlaxy/'
+
+    # Prepare CLI graphlaxy string
+    graphlaxy_parameters = '-f ' + graphlaxy_location + ' -s 1 -e ' + edge_min + ' ' + edge_max
+
+    # Complete graphlaxy command
+    command = python_bin + ' ' + graphlaxy_location + 'GraphlaxyDataGen.py generate ' + graphlaxy_parameters
+
+    # Call graphlaxy
+    graphlaxy = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
+    graphlaxy.wait()
+    if(graphlaxy.returncode != 0):
+        print_color(tcolors.FAIL, "\tGraphlaxy output was not the one expected.\nERxiting now...")
+        exit(1)
+
+    # Copy the graph to PCGCN data
+    graph_path = '../data/graphlaxy/'
+    dataset_name = random_name()
+
+    # Ensure that random name is not already been used
+    while(os.path.exists(graph_path + dataset_name)):
+        dataset_name = random_name()
+
+    # Prepare paths
+    graph_path += dataset_name
+    current_path = graphlaxy_location + 'graphs/RMAT_0.txt'
+
+    command = 'mv ' + current_path + ' ' + graph_path
+
+    # Move the graph
+    move_command = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
+    move_command.wait()
+
+    print_color(tcolors.OKBLUE, " \tGraphlaxy has generated the graph:")
+    print_color(tcolors.OKGREEN, "\t\t" + dataset_name)
+
+    return dataset_name
+
+def graphlaxy_load(graphlaxy_dataset):
+
+    dataset_name = graphlaxy_dataset
+    # Check if the dataset name has the substring .glaxy and removes it
+    if '.glaxy' in dataset_name:
+        dataset_name = graphlaxy_dataset.replace(".glaxy", "")
+
+    dataset_path = '../data/graphlaxy/'
+
+    # Creat the paths for each of the files
+    graph_path = dataset_path + dataset_name + '.glaxy'
+    features_path = dataset_path + dataset_name + '.flaxy'
+    labels_path =  dataset_path + dataset_name + '.llaxy'
+
+    # Check if the graph exists
+    if(not os.path.exists(graph_path)):
+        print_color(tcolors.FAIL, "\tThe specified dataset: " + graphlaxy_dataset + " could not be found !\nExiting now...")
+        exit(1)
+    
+    print('\tLoading ' + print_color_return(tcolors.UNDERLINE, dataset_name) + ' dataset...')
+
+    # Read the graph
+    with open(graph_path, 'r') as g:
+        edges = [[int(num)-1 for num in line.split()] for line in g]
+        edges = np.array(edges)
+    n_edges = int(edges[edges.shape[0]-1, : 1,]+1)
+
+    # Adj matrix
+    adj = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
+                            shape=(n_edges, n_edges),
+                            dtype=np.float32)
+
+    # Prepare parameters
+    features_size = None
+    max_features = None
+    labels_size = None
+    features = None
+    labels = None
+
+    if(not os.path.exists(features_path) or not os.path.exists(labels_path)):
+        # Create the files and store them
+
+        # TODO: This parameters are random; at the moment are set in a predefined threshold.
+        features_size = random.randint(int(n_edges*0.25), int(n_edges*0.75)) # between 25 - 75% of edges size
+        max_features = random.randint(int(features_size*0.05), int(features_size*0.1)) # between 5 - 10% of the size of the features
+        labels_size = random.randint(int(n_edges*0.03), int(n_edges*0.07)) # between 3 - 7% of the size of the edges
+
+        # Manual adjustment if the datset is too small
+        if(max_features < 2):
+            max_features = int(features_size*0.5)
+        
+        if(labels_size < 3):
+            labels_size = int(n_edges*0.5)
+
+        # Randomly generate the features
+        n_features = int(features_size)
+        features = np.empty((n_edges, n_features), dtype=np.float32)
+
+        # Randomly generate the classes
+        n_labels = int(labels_size)
+        labels = np.empty((n_edges, n_labels), dtype=np.float32)
+
+        # Randomly generate the features and labels
+        for n in range(n_edges):
+            # Features
+            feature_row = np.zeros(n_features)
+            feature_row[:random.randint(1, max_features)] = 1
+            np.random.shuffle(feature_row)
+            features[n] = feature_row
+
+            # Labels
+            label_row = np.zeros(n_labels)
+            label_row[random.randint(0, n_labels-1)] = 1
+            labels[n] = label_row
+        
+        # Finally store them
+        np.savetxt(features_path, features, header=str(features_size) + ' ' + str(max_features))
+        np.savetxt(labels_path, labels, header=str(labels_size))
+
+    else:
+        # Read the files and retrieve the features and labels
+        features = np.loadtxt(features_path)
+        labels = np.loadtxt(labels_path)
+
+        # READ the features_size, max_features and labels_size
+        features_header = str(open(features_path).readline()).replace('# ', '').rstrip("\n").split(' ', 1)
+
+        features_size = int(features_header[0])
+        max_features = int(features_header[1])
+        labels_size = int(str(open(labels_path).readline()).replace('# ',''))
+
+    # Make the Adj symmetric
+    adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+
+    # Normalize it
+    adj = normalize(adj + sp.eye(adj.shape[0]))
+
+    # convert adjacency (scipy sparse) coo matrix to a (torch sparse) coo tensor
+    adj = sparse_mx_to_torch_sparse_tensor(adj)
+
+    # Features matrix
+    features = sp.csr_matrix(features, dtype=np.float32)
+
+    # Normalize it
+    features = normalize(features)
+
+    # features csr matrix to float tensor representation (the full matrix)
+    features = torch.FloatTensor(np.array(features.todense()))
+
+    # converts labels to a long tensor
+    labels = torch.LongTensor(np.where(labels)[1])
+
+    # creates 3 ranges, one for training, another one as values, and a final one for testing
+    idx_train = range(int(n_edges*0.2)) # 20% for training
+    idx_val = range(int(n_edges*0.2)+1, int(n_edges*0.7)) # 20 - 70 as values 
+    idx_test = range(int(n_edges*0.7)+1, n_edges) # 70 - 100 for testing
+
+    # creates arrays of length (range)
+    idx_train = torch.LongTensor(idx_train)
+    idx_val = torch.LongTensor(idx_val)
+    idx_test = torch.LongTensor(idx_test)
+
+    # Print general parameters about the dataset
+    print("\t\tEdges " + print_color_return(tcolors.UNDERLINE, "# " + str(n_edges)))
+    print("\t\tFeatures " + print_color_return(tcolors.UNDERLINE, "# " + str(features_size)))
+    print("\t\tMax. Features per vector " + print_color_return(tcolors.UNDERLINE, "# " + str(max_features)))
+    print("\t\tLabels " + print_color_return(tcolors.UNDERLINE, "# " + str(labels_size)))
+
+    print("\tPreparing ranges of edges for labels (train, values and test)...")
+
+    print("\t\tidx_train " + print_color_return(tcolors.UNDERLINE, "# [0, " + str(int(n_edges*0.2)) + "]"))
+    print("\t\tidx_val " + print_color_return(tcolors.UNDERLINE, "# [" + str(int(n_edges*0.2)+1) + ", " + str(int(n_edges*0.7)) + "]"))
+    print("\t\tidx_test " + print_color_return(tcolors.UNDERLINE, "# [" + str(int(n_edges*0.7)+1) + ", " + str(n_edges) + "]"))
+    
+    print_color(tcolors.OKGREEN, "\tDone !")
+
+    return adj, features, labels, idx_train, idx_val, idx_test, graphlaxy_dataset
+
+# Print useful messages in different colors
 class tcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -47,7 +243,14 @@ def random_partition(nvectors, nparts):
 # Calls METIS for partitioning the graph
 def metis_partition(adj, nparts, datasetname):
 
-    graphpath = "../data/" + str(datasetname) + "/" + str(datasetname) + ".graph"
+    datasetpath = datasetname
+
+    # Graphlaxy sanity check
+    if not datasetname == "cora" or not datasetname == "citeseer" or not datasetname == "pubmed":
+        datasetname = datasetname.replace('.glaxy', '')
+        datasetpath = "graphlaxy"
+
+    graphpath = "../data/" + str(datasetpath) + "/" + str(datasetname) + ".graph"
 
     # If the dataset is not transformed to METIS then, do it
     if not os.path.isfile(graphpath):
@@ -86,11 +289,14 @@ def metis_partition(adj, nparts, datasetname):
         exit(1)
     
     print_color(tcolors.OKCYAN, "\tCalling METIS...")
-    subprocess.Popen([metispath, graphpath, str(nparts)], stdout = subprocess.PIPE)
+    metis = subprocess.Popen([metispath, graphpath, str(nparts)], stdout = subprocess.PIPE)
+    metis.wait()
+    if(metis.returncode != 0):
+        print_color(tcolors.FAIL, "\tMETIS could not partition the graph.\nERxiting now...")
+        exit(1)
 
     # Process the METIS output
-    outputpath = "../data/" + str(datasetname) + "/" + str(datasetname) + ".graph.part." + str(nparts)
-    time.sleep(1)
+    outputpath = "../data/" + str(datasetpath) + "/" + str(datasetname) + ".graph.part." + str(nparts)
 
     if not os.path.isfile(outputpath):
         print_color(tcolors.FAIL, "\tMETIS output not found, even when it was executed...\nExiting now...")
@@ -177,7 +383,7 @@ def load_data(path="../data/cora/", dataset="cora"):
     The cora.cites file contains 5429 (edges) citations from one paper to another (nodes).
     """
 
-    print('Loading {} dataset...'.format(dataset))
+    print('\tLoading ' + print_color_return(tcolors.UNDERLINE, dataset) + ' dataset...')
 
     if dataset == "cora":
         # extract content (all) from cora (.content) and store it in a str matrix
@@ -381,3 +587,231 @@ def sparse_float_to_coo(sparse_float_mx):
     sparse_coo_mx = torch.sparse_coo_tensor(indices, values, (sparse_float_mx.shape[0], sparse_float_mx.shape[1]))
 
     return sparse_coo_mx
+
+def get_animals_dic():
+    return (
+        "Aardvark",
+        "Albatross",
+        "Alligator",
+        "Alpaca",
+        "Ant",
+        "Anteater",
+        "Antelope",
+        "Ape",
+        "Armadillo",
+        "Donkey",
+        "Baboon",
+        "Badger",
+        "Barracuda",
+        "Bat",
+        "Bear",
+        "Beaver",
+        "Bee",
+        "Bison",
+        "Boar",
+        "Buffalo",
+        "Butterfly",
+        "Camel",
+        "Capybara",
+        "Caribou",
+        "Cassowary",
+        "Cat",
+        "Caterpillar",
+        "Cattle",
+        "Chamois",
+        "Cheetah",
+        "Chicken",
+        "Chimpanzee",
+        "Chinchilla",
+        "Chough",
+        "Clam",
+        "Cobra",
+        "Cockroach",
+        "Cod",
+        "Cormorant",
+        "Coyote",
+        "Crab",
+        "Crane",
+        "Crocodile",
+        "Crow",
+        "Curlew",
+        "Deer",
+        "Dinosaur",
+        "Dog",
+        "Dogfish",
+        "Dolphin",
+        "Dotterel",
+        "Dove",
+        "Dragonfly",
+        "Duck",
+        "Dugong",
+        "Dunlin",
+        "Eagle",
+        "Echidna",
+        "Eel",
+        "Eland",
+        "Elephant",
+        "Elk",
+        "Emu",
+        "Falcon",
+        "Ferret",
+        "Finch",
+        "Fish",
+        "Flamingo",
+        "Fly",
+        "Fox",
+        "Frog",
+        "Gaur",
+        "Gazelle",
+        "Gerbil",
+        "Giraffe",
+        "Gnat",
+        "Gnu",
+        "Goat",
+        "Goldfinch",
+        "Goldfish",
+        "Goose",
+        "Gorilla",
+        "Goshawk",
+        "Grasshopper",
+        "Grouse",
+        "Guanaco",
+        "Gull",
+        "Hamster",
+        "Hare",
+        "Hawk",
+        "Hedgehog",
+        "Heron",
+        "Herring",
+        "Hippopotamus",
+        "Hornet",
+        "Horse",
+        "Human",
+        "Hummingbird",
+        "Hyena",
+        "Ibex",
+        "Ibis",
+        "Jackal",
+        "Jaguar",
+        "Jay",
+        "Jellyfish",
+        "Kangaroo",
+        "Kingfisher",
+        "Koala",
+        "Kookabura",
+        "Kouprey",
+        "Kudu",
+        "Lapwing",
+        "Lark",
+        "Lemur",
+        "Leopard",
+        "Lion",
+        "Llama",
+        "Lobster",
+        "Locust",
+        "Loris",
+        "Louse",
+        "Lyrebird",
+        "Magpie",
+        "Mallard",
+        "Manatee",
+        "Mandrill",
+        "Mantis",
+        "Marten",
+        "Meerkat",
+        "Mink",
+        "Mole",
+        "Mongoose",
+        "Monkey",
+        "Moose",
+        "Mosquito",
+        "Mouse",
+        "Mule",
+        "Narwhal",
+        "Newt",
+        "Nightingale",
+        "Octopus",
+        "Okapi",
+        "Opossum",
+        "Oryx",
+        "Ostrich",
+        "Otter",
+        "Owl",
+        "Oyster",
+        "Panther",
+        "Parrot",
+        "Partridge",
+        "Peafowl",
+        "Pelican",
+        "Penguin",
+        "Pheasant",
+        "Pig",
+        "Pigeon",
+        "Pony",
+        "Porcupine",
+        "Porpoise",
+        "Quail",
+        "Quelea",
+        "Quetzal",
+        "Rabbit",
+        "Raccoon",
+        "Rail",
+        "Ram",
+        "Rat",
+        "Raven",
+        "Reindeer",
+        "Rhinoceros",
+        "Rook",
+        "Salamander",
+        "Salmon",
+        "Sandpiper",
+        "Sardine",
+        "Scorpion",
+        "Seahorse",
+        "Seal",
+        "Shark",
+        "Sheep",
+        "Shrew",
+        "Skunk",
+        "Snail",
+        "Snake",
+        "Sparrow",
+        "Spider",
+        "Spoonbill",
+        "Squid",
+        "Squirrel",
+        "Starling",
+        "Stingray",
+        "Stinkbug",
+        "Stork",
+        "Swallow",
+        "Swan",
+        "Tapir",
+        "Tarsier",
+        "Termite",
+        "Tiger",
+        "Toad",
+        "Trout",
+        "Turkey",
+        "Turtle",
+        "Viper",
+        "Vulture",
+        "Wallaby",
+        "Walrus",
+        "Wasp",
+        "Weasel",
+        "Whale",
+        "Wildcat",
+        "Wolf",
+        "Wolverine",
+        "Wombat",
+        "Woodcock",
+        "Woodpecker",
+        "Worm",
+        "Wren",
+        "Yak",
+        "Zebra"
+    )
+
+def get_color_dic():
+    return ("Red", "Blue", "Yellow", "Grey", "Black", "Purple", "Orange", "Pink", "Green", "Cyan", "White", "Silver", "Lime", "Teal", "Aqua", "Chocolate", "Gold", "Magenta", "Olive", "Turquoise")
