@@ -47,9 +47,13 @@ if(not os.path.exists(pyconfig_location)):
     # Copies pyconfig.h to /Include dir
     if(install == 'Y'):
         copy_string = "cp " + pyconfig_location.replace('Include/', '') + " " + pyconfig_location.replace('/pyconfig.h', '')
-        os.system(copy_string)
-        print('Graphlaxy can be used \t| ' + print_color_return(tcolors.OKGREEN, "Success") + '.')
-        print("Check the README, Section 'Notes' bullet 1, for further information about this action.")
+        copy_file = subprocess.Popen(copy_string, shell=True, stdout = subprocess.PIPE)
+        copy_file.wait()
+        if(graphlaxy.returncode == 0):
+            print('Graphlaxy can be used \t| ' + print_color_return(tcolors.OKGREEN, "Success") + '.')
+            print("Check the README, Section 'Notes' bullet 1, for further information about this action.")
+        else:
+            print_color(tcolors.FAIL, "An error ocurred, the file could not be moved...")
 
 else:
     print('Graphlaxy can be used \t| ' + print_color_return(tcolors.OKGREEN, "Success") + '.')

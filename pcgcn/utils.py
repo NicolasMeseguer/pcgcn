@@ -6,7 +6,6 @@ import subprocess
 import time
 import sys
 import random
-import networkx as nx
 
 # print full size of matrices
 np.set_printoptions(threshold=np.inf)

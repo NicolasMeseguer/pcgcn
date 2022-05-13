@@ -1,6 +1,9 @@
 install:
 	python setup.py install;
 
+installrmat:
+	cd PaRMAT/Release; make;
+
 run:
 	cd pcgcn; python train.py --no-cuda --dataset cora --epochs 2 --partition metis --nparts 2;
 
