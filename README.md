@@ -146,7 +146,7 @@ If you still want to use the same datset but with different features and labels,
 1. Make sure to recompile PCGCN, `$ make install`, whenever you change any module (i.e. layers, model, train, etc).
 2. [Graphlaxy @ requirements.py] Copies `pyconfig.h` from the directory of Python into the `Include/` directory (careful with permissions).
 3. If a dataset (graph) is NOT undirected, METIS cannot partition it (i.e. graphs in which for each edge (v,u) there is not an edge (u,v)).
-4. The random datasets (PaRMAT and Graphlaxy) have an specific amount of features, max features and classes. These parameters are randomly calculated.
+4. The random datasets (PaRMAT and Graphlaxy) have an specific amount of features, max features and classes. These parameters are randomly calculated, have a look [here](/proof_of_concepts/graphs_random_parameters.png). 
 
 ## References
 
