@@ -37,7 +37,7 @@ python -m pip install -r requirements.txt
    2. `$ python requirements.py` :wrench: Quickly check requirements.
    3. `$ make install` :arrow_down: Compiles and installs the PCGCN module.
 
-## Pa(rallel)RMAT
+## Pa(rallel)RMAT requirements
 
 PaRMAT is a multi-threaded RMAT graph generator. Using PaRMAT, you can create very large undirected RMAT graphs. PaRMAT is designed to exploit multiple threads and to avoid failing when there is not a lot of memory (RAM) available (https://github.com/farkhor/PaRMAT).
 
