@@ -114,7 +114,7 @@ If you still want to use the same datset but with different features and labels,
       (Runs PCGCN on the CPU with 500 epochs, using a random dataset just generated; using METIS as the partitioning algortithm, partitions the 
       graph into 4 subgraphs. DISCLAIMER: this example will generate a random dataset each run. See Example #5)
 
-    Example #5 (using an already generated graph called Blue_Elephant):
+    Example #5 (using an already generated graphlaxy graph called Blue_Elephant):
       python train.py --no-cuda --graphlaxy Blue_Elephant --epochs 500 --partition metis --nparts 2 --sparsity_threshold 50
       (Runs PCGCN on the CPU with 500 epochs, using a random dataset that was previoulsy generated; using METIS as the partitioning algortithm, partitions the 
       graph into 2 subgraphs and for those with a sparsity bigger than 50, will use sparse matrix-mult.)
