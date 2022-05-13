@@ -114,10 +114,19 @@ If you still want to use the same datset but with different features and labels,
       (Runs PCGCN on the CPU with 500 epochs, using a random dataset just generated; using METIS as the partitioning algortithm, partitions the 
       graph into 4 subgraphs. DISCLAIMER: this example will generate a random dataset each run. See Example #5)
 
-    Example #5 (using an already generated graphlaxy graph called Blue_Elephant):
+    Example #5 (using the dataset generated from Example #4, called Blue_Elephant):
       python train.py --no-cuda --graphlaxy Blue_Elephant --epochs 500 --partition metis --nparts 2 --sparsity_threshold 50
       (Runs PCGCN on the CPU with 500 epochs, using a random dataset that was previoulsy generated; using METIS as the partitioning algortithm, partitions the 
       graph into 2 subgraphs and for those with a sparsity bigger than 50, will use sparse matrix-mult.)
+
+    Example #6:
+      python train.py --no-cuda --rmat 1000,7000 --epochs 500 --gcn
+      (Runs the default GCN on the GPU with 500 epochs, using a random dataset that was generated using PaRMAT; no partitioning is done!)
+
+    Example #7 (using the dataset generated from Example #6, called Orange_Monkey):
+      python train.py --no-cuda --rmat Orange_Monkey --epochs 500 --partition metis --nparts 4 --sparsity_threshold 70
+      (Runs PCGCN on the CPU with 500 epochs, using a random dataset that was previoulsy generated; using METIS as the partitioning algortithm, partitions the 
+      graph into 4 subgraphs and for those with a sparsity bigger than 70, will use sparse matrix-mult.)
   </details>
 
 ## Uninstall

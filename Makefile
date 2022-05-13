@@ -20,7 +20,7 @@ uninstallrmat:
 
 # Executes PCGCN model
 run:
-	cd pcgcn; python train.py --no-cuda --dataset cora --epochs 2 --partition metis --nparts 2;
+	cd pcgcn; python train.py --no-cuda --rmat 100,7000 --epochs 100 --partition metis --nparts 4;
 
 runtest:
 	echo "Here you can submit the python script several times, and output the exit to a txt file..."

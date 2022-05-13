@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pcgcn.utils import load_data, accuracy, random_partition, metis_partition, compute_edge_block, tcolors, print_color, print_color_return, graphlaxy_generate, graphlaxy_load
+from pcgcn.utils import load_data, accuracy, random_partition, metis_partition, compute_edge_block, tcolors, print_color, print_color_return, dataset_generate, dataset_load
 from pcgcn.models import GCN
 
 # Training settings + parameters
@@ -41,6 +41,8 @@ parser.add_argument('--dataset', type=str, default="cora",
                     help='Input the dataset')
 parser.add_argument('--graphlaxy', type=str, default="",
                     help='Uses Graphlaxy as the dataset')
+parser.add_argument('--rmat', type=str, default="",
+                    help='Uses RMAT as the dataset')
 
 # Parse arguments
 args = parser.parse_args()
@@ -58,7 +60,6 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 # Multithreaded model ?
 # WIP
 multith = False
-args.cuda = False
 
 # Random seed
 np.random.seed(args.seed)
@@ -68,22 +69,30 @@ if args.cuda:
 
 # Load Data
 print("Processing dataset... ")
-if args.graphlaxy != "":
+if args.graphlaxy != "" or args.rmat != "":
 
-    graphlaxy_dataset = args.graphlaxy
+    # Sanity check of the tool
+    dataset_tool = "Graphlaxy"
+    dataset_path = "../data/graphlaxy/"
+    dataset_name = args.graphlaxy
+    if(args.rmat != ""):
+        dataset_tool = "RMAT"
+        dataset_path = "../data/rmat/"
+        dataset_name = args.rmat
 
-    # If it has a comma, the user wants to generate a new one
-    if ',' in graphlaxy_dataset:
-        graphlaxy_dataset = graphlaxy_generate(graphlaxy_dataset)
-    
+    # If it has a comma, the user wants to generate a new dataset
+    if ',' in dataset_name:
+        dataset_name = dataset_generate(dataset_name, dataset_tool, dataset_path)
+
     # Generate the graph info using the name of the dataset + other parameters
-    adj, features, labels, idx_train, idx_val, idx_test, datasetname = graphlaxy_load(graphlaxy_dataset)
+    adj, features, labels, idx_train, idx_val, idx_test, dataset_name = dataset_load(dataset_name, dataset_tool, dataset_path)
+
 else:
     # Dataset pre-process
     dataset_name = args.dataset.lower()
     dataset_path = "../data/" + dataset_name + "/"
 
-    adj, features, labels, idx_train, idx_val, idx_test, datasetname = load_data(dataset_path ,dataset_name)
+    adj, features, labels, idx_train, idx_val, idx_test, dataset_name = load_data(dataset_path ,dataset_name)
 
 # Start partitioning the graph
 subgraphs = None
@@ -94,7 +103,7 @@ if not args.gcn:
 
     # partitions the graph into args.nparts
     if args.partition.lower() == "metis":
-        subgraphs = metis_partition(adj, args.nparts, datasetname)
+        subgraphs = metis_partition(adj, args.nparts, dataset_name, dataset_path)
     elif args.partition.lower() == "random":
         subgraphs = random_partition(int(adj.shape[0]), args.nparts)
     else:

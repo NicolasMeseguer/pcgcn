@@ -10,92 +10,184 @@ import random
 # print full size of matrices
 np.set_printoptions(threshold=np.inf)
 
+# Print useful messages in different colors
+class tcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def print_color(color, msg):
+    print(color + str(msg) + tcolors.ENDC)
+
+def print_color_return(color, msg):
+    return color + str(msg) + tcolors.ENDC
+
+# Returns a random name + a suffix depending on the tool used to generate the random dataset (i.e. Graphlaxy or RMAT...)
 def random_name():
     animal = get_animals_dic()
     animal = animal[random.randint(0, len(animal)-1)]
     color = get_color_dic()
     color = color[random.randint(0, len(color)-1)]
 
-    return color + '_' + animal + '.glaxy'
+    return color + '_' + animal
 
-def graphlaxy_generate(graphlaxy_edges):
-    print("\tCalling Graphlaxy...")
+# Returns either .glaxy or .grmat depending on the tool used
+def tool_suffix(tool):
+    eof = None
+
+    if(tool == "Graphlaxy"):
+        eof = '.glaxy'
+    elif(tool == "RMAT"):
+        eof = '.grmat'
+    
+    return eof
+
+def dataset_generate(parameters, tool, path):
+    print("\tCalling " + print_color_return(tcolors.UNDERLINE, tool) + "...")
 
     # Transform the input edges
-    comma_idx = graphlaxy_edges.index(',')
-    edge_min = graphlaxy_edges[0:comma_idx]
-    edge_max = graphlaxy_edges[comma_idx+1:]
+    comma_idx = parameters.index(',')
+    # Graphlaxy: param1 edge_size_min, param2 edge_size_max
+    # RMAT: param1 n_vertices, param2 n_edges
+    param1 = parameters[0:comma_idx]
+    param2 = parameters[comma_idx+1:]
 
-    # Get user's python bin
-    python_bin = sys.executable
-    graphlaxy_location = '../graphlaxy/'
-
-    # Prepare CLI graphlaxy string
-    graphlaxy_parameters = '-f ' + graphlaxy_location + ' -s 1 -e ' + edge_min + ' ' + edge_max
-
-    # Complete graphlaxy command
-    command = python_bin + ' ' + graphlaxy_location + 'GraphlaxyDataGen.py generate ' + graphlaxy_parameters
-
-    # Call graphlaxy
-    graphlaxy = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
-    graphlaxy.wait()
-    if(graphlaxy.returncode != 0):
-        print_color(tcolors.FAIL, "\tGraphlaxy output was not the one expected.\nERxiting now...")
-        exit(1)
-
-    # Copy the graph to PCGCN data
-    graph_path = '../data/graphlaxy/'
+    # Prepare the random name
     dataset_name = random_name()
 
     # Ensure that random name is not already been used
-    while(os.path.exists(graph_path + dataset_name)):
+    while(os.path.exists(path + dataset_name + tool_suffix(tool))):
         dataset_name = random_name()
 
-    # Prepare paths
-    graph_path += dataset_name
-    current_path = graphlaxy_location + 'graphs/RMAT_0.txt'
+    # Set path for the tools
+    path += dataset_name + tool_suffix(tool)
+    tool_location = None
 
-    command = 'mv ' + current_path + ' ' + graph_path
+    # Graphlaxy tool
+    if(tool == "Graphlaxy"):
+        # Get user's python bin
+        python_bin = sys.executable
+        tool_location = '../graphlaxy/'
+
+        # Prepare CLI graphlaxy string
+        graphlaxy_parameters = '-f ' + tool_location + ' -s 1 -e ' + param1 + ' ' + param2
+
+        # Complete graphlaxy command
+        command = python_bin + ' ' + tool_location + 'GraphlaxyDataGen.py generate ' + graphlaxy_parameters
+
+        # Call graphlaxy
+        graphlaxy = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
+        graphlaxy.wait()
+        if(graphlaxy.returncode != 0):
+            print_color(tcolors.FAIL, "\tGraphlaxy output was not the one expected.\nExiting now...")
+            exit(1)
+        
+        # Update paths
+        current_path = tool_location + 'graphs/RMAT_0.txt'
+
+    # RMAT tool
+    elif(tool == "RMAT"):
+        # PaRMAT location
+        tool_location = '../PaRMAT/Release/PaRMAT'
+
+        if not os.path.isfile(tool_location):
+            print_color(tcolors.FAIL, "\tYou MUST compile PaRMT in order to use '--rmat <option>' as the dataset generator.\nExiting now..." )
+            exit(1)
+
+        # Prepare CLI PaRMAT parameters
+        parmat_parameters = '-sorted -undirected -nVertices ' + param1 + ' -nEdges ' + param2
+
+        # Complete PaRMAT command
+        command = './' + tool_location + ' ' + parmat_parameters
+
+        # Call PaRMAT
+        parmat = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
+        parmat.wait()
+        if(parmat.returncode != 0):
+            print_color(tcolors.FAIL, "\tPaRMAT output was not the one expected.\nERxiting now...")
+            exit(1)
+
+        # Update paths
+        current_path = 'out.txt'
+
+    # Prepare the command
+    command = 'mv ' + current_path + ' ' + path
 
     # Move the graph
     move_command = subprocess.Popen(command, shell=True, stdout = subprocess.PIPE)
     move_command.wait()
 
-    print_color(tcolors.OKBLUE, " \tGraphlaxy has generated the graph:")
+    print_color(tcolors.OKBLUE, "\t" + tool + " has generated the graph:")
     print_color(tcolors.OKGREEN, "\t\t" + dataset_name)
 
     return dataset_name
 
-def graphlaxy_load(graphlaxy_dataset):
+def dataset_load(dataset, tool, path):
 
-    dataset_name = graphlaxy_dataset
-    # Check if the dataset name has the substring .glaxy and removes it
-    if '.glaxy' in dataset_name:
-        dataset_name = graphlaxy_dataset.replace(".glaxy", "")
+    # Parameters for easy handling
+    dataset_name = dataset
+    dataset_path = path
+    graph_path = None
+    features_path = None
+    labels_path = None
 
-    dataset_path = '../data/graphlaxy/'
+    # Parameters to read the graph
+    bias_idx = 0
 
-    # Creat the paths for each of the files
-    graph_path = dataset_path + dataset_name + '.glaxy'
-    features_path = dataset_path + dataset_name + '.flaxy'
-    labels_path =  dataset_path + dataset_name + '.llaxy'
+    # Depending on the tool used, change the path of the dataset
+    if tool == "Graphlaxy":
+
+        # Sanity check of the dataset name, JUST IN CASE
+        if '.glaxy' in dataset:
+            dataset_name = dataset.replace(".glaxy", "")
+
+        # Create the paths for each of the files
+        graph_path = dataset_path + dataset_name + '.glaxy'
+        features_path = dataset_path + dataset_name + '.flaxy'
+        labels_path =  dataset_path + dataset_name + '.llaxy'
+
+        # IDx of the vertices start from 1, so, substract 1
+        bias_idx = -1
+
+    elif tool == "RMAT":
+
+        # Sanity check of the dataset name, JUST IN CASE
+        if '.grmat' in dataset:
+            dataset_name = dataset.replace(".grmat", "")
+
+        # Create the paths for each of the files
+        graph_path = dataset_path + dataset_name + '.grmat'
+        features_path = dataset_path + dataset_name + '.frmat'
+        labels_path =  dataset_path + dataset_name + '.lrmat'
 
     # Check if the graph exists
     if(not os.path.exists(graph_path)):
-        print_color(tcolors.FAIL, "\tThe specified dataset: " + graphlaxy_dataset + " could not be found !\nExiting now...")
+        print_color(tcolors.FAIL, "\tThe specified dataset: " + dataset_name + " could not be found in " + graph_path + " !\nExiting now...")
         exit(1)
     
     print('\tLoading ' + print_color_return(tcolors.UNDERLINE, dataset_name) + ' dataset...')
 
     # Read the graph
     with open(graph_path, 'r') as g:
-        edges = [[int(num)-1 for num in line.split()] for line in g]
+        edges = [[(int(num) + bias_idx) for num in line.split()] for line in g]
         edges = np.array(edges)
-    n_edges = int(edges[edges.shape[0]-1, : 1,]+1)
+        g.seek(0)
+        n_edges = len([line.strip("\n") for line in g if line != "\n"])
+    
+    if(tool == "Graphlaxy"):
+        n_vert = int(edges[edges.shape[0]-1, : 1,]+1)
+    elif(tool == "RMAT"):
+        n_vert  = int(np.amax(edges)) + 1
 
     # Adj matrix
     adj = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
-                            shape=(n_edges, n_edges),
+                            shape=(n_vert, n_vert),
                             dtype=np.float32)
 
     # Prepare parameters
@@ -109,27 +201,27 @@ def graphlaxy_load(graphlaxy_dataset):
         # Create the files and store them
 
         # TODO: This parameters are random; at the moment are set in a predefined threshold.
-        features_size = random.randint(int(n_edges*0.25), int(n_edges*0.75)) # between 25 - 75% of edges size
+        features_size = random.randint(int(n_vert*0.25), int(n_vert*0.75)) # between 25 - 75% of the vertices
         max_features = random.randint(int(features_size*0.05), int(features_size*0.1)) # between 5 - 10% of the size of the features
-        labels_size = random.randint(int(n_edges*0.03), int(n_edges*0.07)) # between 3 - 7% of the size of the edges
+        labels_size = random.randint(int(n_vert*0.03), int(n_vert*0.07)) # between 3 - 7% of the vertices
 
         # Manual adjustment if the datset is too small
         if(max_features < 2):
             max_features = int(features_size*0.5)
         
         if(labels_size < 3):
-            labels_size = int(n_edges*0.5)
+            labels_size = int(n_vert*0.5)
 
         # Randomly generate the features
         n_features = int(features_size)
-        features = np.empty((n_edges, n_features), dtype=np.float32)
+        features = np.empty((n_vert, n_features), dtype=np.float32)
 
         # Randomly generate the classes
         n_labels = int(labels_size)
-        labels = np.empty((n_edges, n_labels), dtype=np.float32)
+        labels = np.empty((n_vert, n_labels), dtype=np.float32)
 
         # Randomly generate the features and labels
-        for n in range(n_edges):
+        for n in range(n_vert):
             # Features
             feature_row = np.zeros(n_features)
             feature_row[:random.randint(1, max_features)] = 1
@@ -152,9 +244,9 @@ def graphlaxy_load(graphlaxy_dataset):
 
         # READ the features_size, max_features and labels_size
         features_header = str(open(features_path).readline()).replace('# ', '').rstrip("\n").split(' ', 1)
-
         features_size = int(features_header[0])
         max_features = int(features_header[1])
+
         labels_size = int(str(open(labels_path).readline()).replace('# ',''))
 
     # Make the Adj symmetric
@@ -179,9 +271,9 @@ def graphlaxy_load(graphlaxy_dataset):
     labels = torch.LongTensor(np.where(labels)[1])
 
     # creates 3 ranges, one for training, another one as values, and a final one for testing
-    idx_train = range(int(n_edges*0.2)) # 20% for training
-    idx_val = range(int(n_edges*0.2)+1, int(n_edges*0.7)) # 20 - 70 as values 
-    idx_test = range(int(n_edges*0.7)+1, n_edges) # 70 - 100 for testing
+    idx_train = range(int(n_vert*0.2)) # 20% for training
+    idx_val = range(int(n_vert*0.2)+1, int(n_vert*0.7)) # 20 - 70 as values 
+    idx_test = range(int(n_vert*0.7)+1, n_vert) # 70 - 100 for testing
 
     # creates arrays of length (range)
     idx_train = torch.LongTensor(idx_train)
@@ -189,38 +281,20 @@ def graphlaxy_load(graphlaxy_dataset):
     idx_test = torch.LongTensor(idx_test)
 
     # Print general parameters about the dataset
-    print("\t\tEdges " + print_color_return(tcolors.UNDERLINE, "# " + str(n_edges)))
-    print("\t\tFeatures " + print_color_return(tcolors.UNDERLINE, "# " + str(features_size)))
-    print("\t\tMax. Features per vector " + print_color_return(tcolors.UNDERLINE, "# " + str(max_features)))
+    print("\t\tVertices  " + print_color_return(tcolors.UNDERLINE, "# " + str(n_vert)))
+    print("\t\tEdges  " + print_color_return(tcolors.UNDERLINE, "# " + str(n_edges)))
+    print("\t\tFeatures " + print_color_return(tcolors.UNDERLINE, "# " + str(features_size)) + " (max per vector " + print_color_return(tcolors.UNDERLINE, "# " + str(max_features)) + ")")
     print("\t\tLabels " + print_color_return(tcolors.UNDERLINE, "# " + str(labels_size)))
 
-    print("\tPreparing ranges of edges for labels (train, values and test)...")
+    # print("\tPreparing ranges of edges for labels (train, values and test)...")
 
-    print("\t\tidx_train " + print_color_return(tcolors.UNDERLINE, "# [0, " + str(int(n_edges*0.2)) + "]"))
-    print("\t\tidx_val " + print_color_return(tcolors.UNDERLINE, "# [" + str(int(n_edges*0.2)+1) + ", " + str(int(n_edges*0.7)) + "]"))
-    print("\t\tidx_test " + print_color_return(tcolors.UNDERLINE, "# [" + str(int(n_edges*0.7)+1) + ", " + str(n_edges) + "]"))
+    # print("\t\tidx_train " + print_color_return(tcolors.UNDERLINE, "# [0, " + str(int(n_vert*0.2)) + "]"))
+    # print("\t\tidx_val " + print_color_return(tcolors.UNDERLINE, "# [" + str(int(n_vert*0.2)+1) + ", " + str(int(n_vert*0.7)) + "]"))
+    # print("\t\tidx_test " + print_color_return(tcolors.UNDERLINE, "# [" + str(int(n_vert*0.7)+1) + ", " + str(n_vert) + "]"))
     
     print_color(tcolors.OKGREEN, "\tDone !")
 
-    return adj, features, labels, idx_train, idx_val, idx_test, graphlaxy_dataset
-
-# Print useful messages in different colors
-class tcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-def print_color(color, msg):
-    print(color + str(msg) + tcolors.ENDC)
-
-def print_color_return(color, msg):
-    return color + str(msg) + tcolors.ENDC
+    return adj, features, labels, idx_train, idx_val, idx_test, dataset_name
 
 def encode_onehot(labels):
     classes = set(labels)
@@ -240,16 +314,10 @@ def random_partition(nvectors, nparts):
     return partitions
 
 # Calls METIS for partitioning the graph
-def metis_partition(adj, nparts, datasetname):
+def metis_partition(adj, nparts, dataset, path):
 
-    datasetpath = datasetname
-
-    # Graphlaxy sanity check
-    if not datasetname == "cora" and not datasetname == "citeseer" and not datasetname == "pubmed":
-        datasetname = datasetname.replace('.glaxy', '')
-        datasetpath = "graphlaxy"
-
-    graphpath = "../data/" + str(datasetpath) + "/" + str(datasetname) + ".graph"
+    # Path where the output of METIS is going to be
+    graphpath = path + dataset + ".graph"
 
     # If the dataset is not transformed to METIS then, do it
     if not os.path.isfile(graphpath):
@@ -295,7 +363,7 @@ def metis_partition(adj, nparts, datasetname):
         exit(1)
 
     # Process the METIS output
-    outputpath = "../data/" + str(datasetpath) + "/" + str(datasetname) + ".graph.part." + str(nparts)
+    outputpath = graphpath + ".part." + str(nparts)
 
     if not os.path.isfile(outputpath):
         print_color(tcolors.FAIL, "\tMETIS output not found, even when it was executed...\nExiting now...")
