@@ -1,7 +1,7 @@
 Partition Centric Graph Convolutional Networks in PyTorch, PCGCN
 ====
 
-PyTorch implementation of Graph Convolutional Networks (GCNs) for semi-supervised classification [1] and Partition Centric Processing (PCGCN) for Accelerating Graph Convolutional Network [3] using METIS [4] as the partitioning algorithm and a synthetic graph dataset generator [5].
+PyTorch implementation of Graph Convolutional Networks (GCNs) for semi-supervised classification [1] and Partition Centric Processing (PCGCN) for Accelerating Graph Convolutional Network [3] using METIS [4] as the partitioning algorithm and a synthetic graph dataset generator [5] + PaRMAT dataset generator [7].
 
 For a high-level introduction to GCNs, see: Thomas Kipf, [Graph Convolutional Networks](http://tkipf.github.io/graph-convolutional-networks/) (2016).
 
@@ -39,16 +39,16 @@ python -m pip install -r requirements.txt
 
 ## Pa(rallel)RMAT
 
-PaRMAT [7] is a multi-threaded RMAT graph generator. Using PaRMAT, you can create very large undirected RMAT graphs. PaRMAT is designed to exploit multiple threads and to avoid failing when there is not a lot of memory (RAM) available (https://github.com/farkhor/PaRMAT).
+PaRMAT is a multi-threaded RMAT graph generator. Using PaRMAT, you can create very large undirected RMAT graphs. PaRMAT is designed to exploit multiple threads and to avoid failing when there is not a lot of memory (RAM) available (https://github.com/farkhor/PaRMAT).
 
 To compile PaRMAT, you'll need to have a C++ compiler that supports C++11 features.
 
 3. Install PaRMAT.
    1. `$ make installrmat` :arrow_down: Compiles PaRMAT.
 
-You can now use `--rmat <option>` (have a look at [parameters allowed](#Usage).
+You can now use `--rmat <option>` (have a look at [parameters allowed](#Usage)).
 
-PaRMAT will automatically generate an undirected graph, already sorted and with the specified amount of vertices and edges specified
+PaRMAT will automatically generate an undirected graph, already sorted and with the specified amount of vertices and edges specified.
 
 ## Graphlaxy requirements
 
@@ -59,7 +59,7 @@ At this point (if executed the `requirements.py`), if you want to install Graphl
    2. `$ python -m pip install -r requirements.txt` :arrow_down: Installs the dependencies for the Graphlaxy module.
    3. `$ cd ..` :point_right: Move back to PCGCN root dir.
 
-You can now use `--graphlaxy <option>` (have a look at [parameters allowed](#Usage).
+You can now use `--graphlaxy <option>` (have a look at [parameters allowed](#Usage)).
 
 In case you generate a new graph, along with the graph file ended with .g(raph)laxy, it will come two additional files: .f(eatures)laxy and .l(abels)laxy. These two corresponds to random generated values for the features and classes (subsequent runs with this dataset will use the random generated values). 
 
