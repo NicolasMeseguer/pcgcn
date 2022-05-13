@@ -1,11 +1,17 @@
+# PCGCN module
 /build
 /dist
 /pcgcn.egg-info
+
+# METIS
 /metis
 /metis-5.1.0/build
-*.graph*
+
+# PyTorch cached files
 *.pyc
+
+# Testing purposes
 /*.txt
-/graphlaxy/dataset_description.csv
-/graphlaxy/graphs
+
+# DO NOT ignore the requirements
 !requirements.txt
