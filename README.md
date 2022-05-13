@@ -48,11 +48,13 @@ To compile PaRMAT, you'll need to have a C++ compiler that supports C++11 featur
 
 You can now use `--rmat <option>` (have a look at [parameters allowed](#Usage)).
 
-PaRMAT will automatically generate an undirected graph, already sorted and with the specified amount of vertices and edges specified.
+PaRMAT will automatically generate an undirected graph, already sorted and with the specified amount of vertices and edges. Along with the graph file ended with .g(raph)rmat, it will come with two additional files: .f(eatures)rmat and .l(abels)rmat. These two corresponds to random generated values for the features and classes (subsequent runs with this dataset will use the random generated values).
+
+If you still want to use the same datset but with different features and labels, simply remove the .frmat and .lrmat files (they will spawn again with new values!).
 
 ## Graphlaxy requirements
 
-At this point (if executed the `requirements.py`), if you want to install Graphlaxy you should be able to do so without any problem. I encourage strongly to have a look at the README of Graphlaxy repository (https://github.com/BNN-UPC/graphlaxy/blob/master/README.md).
+At this point (if executed the `requirements.py`), and you want to install Graphlaxy you should be able to do so without any problem. I encourage strongly to have a look at the README of Graphlaxy repository (https://github.com/BNN-UPC/graphlaxy/blob/master/README.md).
 
 4. Install the requirements for Graphlaxy
    1. `$ cd graphlaxy` :point_right: Move to the Graphlaxy dir.
@@ -61,7 +63,7 @@ At this point (if executed the `requirements.py`), if you want to install Graphl
 
 You can now use `--graphlaxy <option>` (have a look at [parameters allowed](#Usage)).
 
-In case you generate a new graph, along with the graph file ended with .g(raph)laxy, it will come two additional files: .f(eatures)laxy and .l(abels)laxy. These two corresponds to random generated values for the features and classes (subsequent runs with this dataset will use the random generated values). 
+In case you generate a new graph, along with the graph file ended with .g(raph)laxy, it will come with two additional files: .f(eatures)laxy and .l(abels)laxy. These two corresponds to random generated values for the features and classes (subsequent runs with this dataset will use the random generated values). 
 
 If you still want to use the same datset but with different features and labels, simply remove the .flaxy and .llaxy files (they will spawn again with new values!).
 

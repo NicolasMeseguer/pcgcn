@@ -1,0 +1,12 @@
+# Metis output
+*.graph*
+
+# Graphlaxy graphs
+*.glaxy
+*.flaxy
+*.llaxy
+
+# RMAT graphs
+*.grmat
+*.frmat
+*.lrmat

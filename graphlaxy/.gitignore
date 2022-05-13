@@ -135,3 +135,7 @@ nohup.out
 *.sqlite
 
 .vscode
+
+# Ignore the .CSV and the generated graphs
+dataset_description.csv
+graphs
