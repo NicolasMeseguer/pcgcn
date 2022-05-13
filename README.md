@@ -134,6 +134,12 @@ If you still want to use the same datset but with different features and labels,
 
 3. Uninstall PaRMAT
    1. `$ make uninstallrmat` :warning: Removes all files installed.
+  
+4. Uninstall Graphlaxy
+   1. Graphlaxy has nothing compiled but just a set of modules. In case you want to uninstall the modules:
+      1. `$ cd graphlaxy` :point_right: Move to the Graphlaxy dir.
+      2. `$ python -m pip uninstall -r requirements.txt` :recycle: Deletes the modules used for Graphlaxy.
+      3. `$ cd ..` :point_right: Move back to PCGCN root dir.
 
 ## Notes
 
