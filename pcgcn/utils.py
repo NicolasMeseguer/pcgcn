@@ -246,7 +246,7 @@ def metis_partition(adj, nparts, datasetname):
     datasetpath = datasetname
 
     # Graphlaxy sanity check
-    if not datasetname == "cora" or not datasetname == "citeseer" or not datasetname == "pubmed":
+    if not datasetname == "cora" and not datasetname == "citeseer" and not datasetname == "pubmed":
         datasetname = datasetname.replace('.glaxy', '')
         datasetpath = "graphlaxy"
 
