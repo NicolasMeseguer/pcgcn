@@ -215,4 +215,4 @@ Please cite this paper if you use any of this (code) in your own work:
 
 ## Future Work
 - :heavy_check_mark: Refactor the function that converts a graph into the METIS input (using adj. sparse representation).
-- :red_circle: Computing of subgraphs (edge_blocks) refactor to sparse (it'll be faster).
+- :x: Computing of subgraphs (edge_blocks) refactor to sparse (it'll be faster).
