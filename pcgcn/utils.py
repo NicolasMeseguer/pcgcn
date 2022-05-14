@@ -363,23 +363,29 @@ def metis_partition(adj, nparts, dataset, path):
     
     print_color(tcolors.OKCYAN, "\tCalling METIS...")
 
-    # Prepare the CLI command
-    metis_parameters = ""
-    command = metispath + ' ' + graphpath + ' ' + str(nparts) + ' ' + metis_parameters
-
-    metis = subprocess.Popen(command, shell = True, stdout = subprocess.PIPE)
-    metis.wait()
-    if(metis.returncode != 0):
-        print_color(tcolors.FAIL, "\tMETIS could not partition the graph.\nERxiting now...")
-        exit(1)
-
-    # Process the METIS output
+    # Prepare the METIS output
     outputpath = graphpath + ".part." + str(nparts)
 
-    if not os.path.isfile(outputpath):
-        print_color(tcolors.FAIL, "\tMETIS output not found, even when it was executed...\nExiting now...")
-        exit(1)
-    
+    # If the output of METIS already exists, do not call it again.
+    if not os.path.exists(outputpath):
+
+        # Prepare the CLI command
+        metis_parameters = ""
+        command = metispath + ' ' + graphpath + ' ' + str(nparts) + ' ' + metis_parameters
+
+        metis = subprocess.Popen(command, shell = True, stdout = subprocess.PIPE)
+        metis.wait()
+        if(metis.returncode != 0):
+            print_color(tcolors.FAIL, "\tMETIS could not partition the graph.\nExiting now...")
+            exit(1)
+
+        if not os.path.isfile(outputpath):
+            print_color(tcolors.FAIL, "\tMETIS output not found, even when it was executed...\nExiting now...")
+            exit(1)
+    else:
+        print("\t" + print_color_return(tcolors.UNDERLINE, "Previous output") + " found (" + outputpath + ").\n\t" + print_color_return(tcolors.UNDERLINE, "Delete it") + " to generate a new METIS output.")
+            
+    # At this point, either the file exists or was already generated
     graphfile = open(outputpath, "r")
 
     # Dump content of file
