@@ -326,7 +326,7 @@ def metis_partition(adj, nparts, dataset, path):
         flag_remove_one_value = 0
         nedges = int(adj._nnz()/2)
         if(int(adj._nnz()) % 2 != 0):
-            # If the number of edges is odd (impar), remove one edge (random at the moment).
+            # If the number of edges is odd, remove one edge (the [0][0]).
             flag_remove_one_value = 1
             print_color(tcolors.WARNING, "\tWARNING: The first edge [0][0] will be removed...\n\tNumber of edges is odd.")
 
