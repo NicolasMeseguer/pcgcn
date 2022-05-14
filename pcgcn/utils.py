@@ -8,7 +8,7 @@ import sys
 import random
 
 # print full size of matrices
-np.set_printoptions(threshold=np.inf)
+# np.set_printoptions(threshold=np.inf)
 
 # Print useful messages in different colors
 class tcolors:
@@ -323,25 +323,28 @@ def metis_partition(adj, nparts, dataset, path):
     if not os.path.isfile(graphpath):
         print_color(tcolors.OKCYAN, "\tConverting to METIS...")
 
-        flag_remove_one_value = 0
+        # Get the vector and edge size
+        nvectors = int(adj.shape[0])
         nedges = int(adj._nnz()/2)
+
+        # Indices (sparse)
+        indexes_sparse = adj.coalesce().indices().numpy()
+
+        # If the number of edges is odd, remove one
         if(int(adj._nnz()) % 2 != 0):
-            # If the number of edges is odd, remove one edge (the [0][0]).
-            flag_remove_one_value = 1
+            indexes_sparse = np.delete(indexes_sparse, 0, 1)
             print_color(tcolors.WARNING, "\tWARNING: The first edge [0][0] will be removed...\n\tNumber of edges is odd.")
 
-        adj_numpy = adj.to_dense().numpy()
-        nvectors = int(adj.shape[0])
-        
         content = ""
-        for i in range(int(adj.shape[0])):
-            linetowrite = ""
-            for j in range(int(adj.shape[1])):
-                if(adj_numpy[i][j] != 0.0):
-                    if(flag_remove_one_value == 0):
-                        linetowrite += str(j + 1) + " "
-                    flag_remove_one_value = 0
-            content += linetowrite.rstrip() + "\n"
+        linetowrite = ""
+        start_val = indexes_sparse[0][0]
+        for i in range(indexes_sparse.shape[1]):
+            if(indexes_sparse[0][i] > start_val):
+                start_val = indexes_sparse[0][i]
+                content += linetowrite.rstrip() + "\n"
+                linetowrite = ""
+
+            linetowrite += str(indexes_sparse[1][i] + 1) + " "
 
         graphfile = open(graphpath, "w")
         graphfile.write(str(nvectors) + " " + str(nedges) + "\n")
