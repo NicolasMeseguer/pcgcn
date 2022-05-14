@@ -54,6 +54,8 @@ If you still want to use the same datset but with different features and labels,
 
 ## Graphlaxy requirements
 
+Graphlaxy is a tool used to create synthetic graph datasets with an even distribution over a set of metrics (or projection) using 'Nash Bargain Scheme' optimization. 
+
 At this point (if executed the `requirements.py`), and you want to install Graphlaxy you should be able to do so without any problem. I encourage strongly to have a look at the README of Graphlaxy repository (https://github.com/BNN-UPC/graphlaxy/blob/master/README.md).
 
 4. Install the requirements for Graphlaxy
