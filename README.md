@@ -212,5 +212,5 @@ Please cite this paper if you use any of this (code) in your own work:
 ```
 
 ## Future Work
-1. Converting graph to METIS output (dataset.graph) using sparse representation not dense (faster).
-2. Computing of subgraphs (edge_blocks) refactor to sparse (it'll be faster).
+- [x] Refactor the function that converts a graph into the METIS input (using adj. sparse representation).
+- [ ] Computing of subgraphs (edge_blocks) refactor to sparse (it'll be faster).

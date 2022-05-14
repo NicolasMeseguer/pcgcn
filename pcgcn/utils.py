@@ -334,7 +334,7 @@ def metis_partition(adj, nparts, dataset, path):
         if(int(adj._nnz()) % 2 != 0):
             indexes_sparse = np.delete(indexes_sparse, 0, 1)
             print_color(tcolors.WARNING, "\tWARNING: The first edge [0][0] will be removed...\n\tNumber of edges is odd.")
-
+        
         content = ""
         linetowrite = ""
         start_val = indexes_sparse[0][0]
@@ -345,6 +345,9 @@ def metis_partition(adj, nparts, dataset, path):
                 linetowrite = ""
 
             linetowrite += str(indexes_sparse[1][i] + 1) + " "
+        
+        # Write the last line
+        content += linetowrite.rstrip() + "\n"
 
         graphfile = open(graphpath, "w")
         graphfile.write(str(nvectors) + " " + str(nedges) + "\n")
@@ -359,7 +362,12 @@ def metis_partition(adj, nparts, dataset, path):
         exit(1)
     
     print_color(tcolors.OKCYAN, "\tCalling METIS...")
-    metis = subprocess.Popen([metispath, graphpath, str(nparts)], stdout = subprocess.PIPE)
+
+    # Prepare the CLI command
+    metis_parameters = ""
+    command = metispath + ' ' + graphpath + ' ' + str(nparts) + ' ' + metis_parameters
+
+    metis = subprocess.Popen(command, shell = True, stdout = subprocess.PIPE)
     metis.wait()
     if(metis.returncode != 0):
         print_color(tcolors.FAIL, "\tMETIS could not partition the graph.\nERxiting now...")
