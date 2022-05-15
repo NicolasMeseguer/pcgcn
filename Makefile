@@ -20,7 +20,7 @@ uninstallrmat:
 
 # Executes PCGCN model
 run:
-	cd pcgcn; python train.py --no-cuda --rmat 1000,7000 --epochs 100 --partition metis --nparts 4;
+	cd pcgcn; python train.py --no-cuda --no-epochs --rmat Magenta_Spoonbill --epochs 2 --partition metis --nparts 2;
 
 runtest:
-	echo "Here you can submit the python script several times, and output the exit to a txt file..."
+	cd pcgcn; python train.py --no-cuda --no-epochs --rmat Magenta_Spoonbill --epochs 2 --partition metis --nparts 2; python train.py --no-cuda --no-epochs --rmat Magenta_Spoonbill --epochs 2 --partition metis --nparts 4; python train.py --no-cuda --no-epochs --rmat Magenta_Spoonbill --epochs 2 --partition metis --nparts 8; python train.py --no-cuda --no-epochs --rmat Magenta_Spoonbill --epochs 2 --partition metis --nparts 16;

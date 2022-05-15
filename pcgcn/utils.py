@@ -8,7 +8,7 @@ import sys
 import random
 
 # print full size of matrices
-np.set_printoptions(threshold=np.inf)
+# np.set_printoptions(threshold=np.inf)
 
 # Print useful messages in different colors
 class tcolors:
@@ -234,8 +234,8 @@ def dataset_load(dataset, tool, path):
             labels[n] = label_row
         
         # Finally store them
-        np.savetxt(features_path, features, header=str(features_size) + ' ' + str(max_features))
-        np.savetxt(labels_path, labels, header=str(labels_size))
+        np.savetxt(features_path, features, fmt='%.0f', header=str(features_size) + ' ' + str(max_features))
+        np.savetxt(labels_path, labels, fmt='%.0f', header=str(labels_size))
 
     else:
         # Read the files and retrieve the features and labels
@@ -249,11 +249,15 @@ def dataset_load(dataset, tool, path):
 
         labels_size = int(str(open(labels_path).readline()).replace('# ',''))
 
+    ###################################
+    ### NOW COMES THE POSTPROCESS ! ###
+    ###################################
+
     # Make the Adj symmetric
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
 
     # Normalize it
-    adj = normalize(adj + sp.eye(adj.shape[0]))
+    adj = normalize_adj(adj + sp.eye(adj.shape[0]))
 
     # convert adjacency (scipy sparse) coo matrix to a (torch sparse) coo tensor
     adj = sparse_mx_to_torch_sparse_tensor(adj)
@@ -262,7 +266,7 @@ def dataset_load(dataset, tool, path):
     features = sp.csr_matrix(features, dtype=np.float32)
 
     # Normalize it
-    features = normalize(features)
+    features = normalize_features(features)
 
     # features csr matrix to float tensor representation (the full matrix)
     features = torch.FloatTensor(np.array(features.todense()))
@@ -323,25 +327,31 @@ def metis_partition(adj, nparts, dataset, path):
     if not os.path.isfile(graphpath):
         print_color(tcolors.OKCYAN, "\tConverting to METIS...")
 
-        flag_remove_one_value = 0
-        nedges = int(adj._nnz()/2)
-        if(int(adj._nnz()) % 2 != 0):
-            # If the number of edges is odd (impar), remove one edge (random at the moment).
-            flag_remove_one_value = 1
-            print_color(tcolors.WARNING, "\tWARNING: The first edge [0][0] will be removed...\n\tNumber of edges is odd.")
-
-        adj_numpy = adj.to_dense().numpy()
+        # Get the vector and edge size
         nvectors = int(adj.shape[0])
+        nedges = int(adj._nnz()/2)
+
+        # Indices (sparse)
+        indexes_sparse = adj.coalesce().indices().numpy()
+
+        # If the number of edges is odd, remove one
+        if(int(adj._nnz()) % 2 != 0):
+            indexes_sparse = np.delete(indexes_sparse, 0, 1)
+            print_color(tcolors.WARNING, "\tWARNING: The first edge [0][0] will be removed...\n\tNumber of edges is odd.")
         
         content = ""
-        for i in range(int(adj.shape[0])):
-            linetowrite = ""
-            for j in range(int(adj.shape[1])):
-                if(adj_numpy[i][j] != 0.0):
-                    if(flag_remove_one_value == 0):
-                        linetowrite += str(j + 1) + " "
-                    flag_remove_one_value = 0
-            content += linetowrite.rstrip() + "\n"
+        linetowrite = ""
+        start_val = indexes_sparse[0][0]
+        for i in range(indexes_sparse.shape[1]):
+            if(indexes_sparse[0][i] > start_val):
+                start_val = indexes_sparse[0][i]
+                content += linetowrite.rstrip() + "\n"
+                linetowrite = ""
+
+            linetowrite += str(indexes_sparse[1][i] + 1) + " "
+        
+        # Write the last line
+        content += linetowrite.rstrip() + "\n"
 
         graphfile = open(graphpath, "w")
         graphfile.write(str(nvectors) + " " + str(nedges) + "\n")
@@ -356,19 +366,30 @@ def metis_partition(adj, nparts, dataset, path):
         exit(1)
     
     print_color(tcolors.OKCYAN, "\tCalling METIS...")
-    metis = subprocess.Popen([metispath, graphpath, str(nparts)], stdout = subprocess.PIPE)
-    metis.wait()
-    if(metis.returncode != 0):
-        print_color(tcolors.FAIL, "\tMETIS could not partition the graph.\nERxiting now...")
-        exit(1)
 
-    # Process the METIS output
+    # Prepare the METIS output
     outputpath = graphpath + ".part." + str(nparts)
 
-    if not os.path.isfile(outputpath):
-        print_color(tcolors.FAIL, "\tMETIS output not found, even when it was executed...\nExiting now...")
-        exit(1)
-    
+    # If the output of METIS already exists, do not call it again.
+    if not os.path.exists(outputpath):
+
+        # Prepare the CLI command
+        metis_parameters = ""
+        command = metispath + ' ' + graphpath + ' ' + str(nparts) + ' ' + metis_parameters
+
+        metis = subprocess.Popen(command, shell = True, stdout = subprocess.PIPE)
+        metis.wait()
+        if(metis.returncode != 0):
+            print_color(tcolors.FAIL, "\tMETIS could not partition the graph.\nExiting now...")
+            exit(1)
+
+        if not os.path.isfile(outputpath):
+            print_color(tcolors.FAIL, "\tMETIS output not found, even when it was executed...\nExiting now...")
+            exit(1)
+    else:
+        print("\t" + print_color_return(tcolors.UNDERLINE, "Previous output") + " found (" + outputpath + ").\n\t" + print_color_return(tcolors.UNDERLINE, "Delete it") + " to generate a new METIS output.")
+            
+    # At this point, either the file exists or was already generated
     graphfile = open(outputpath, "r")
 
     # Dump content of file
@@ -383,7 +404,7 @@ def metis_partition(adj, nparts, dataset, path):
 
     tmpVertex = 0
     for line in fileDump:
-        partitions[line].append(tmpVertex)
+        partitions[int(line)].append(tmpVertex)
         tmpVertex += 1
 
     return partitions
@@ -395,17 +416,19 @@ def metis_partition(adj, nparts, dataset, path):
 def compute_edge_block(subgraphs, adj, sparsity_threshold):
 
     adj_numpy = adj.to_dense().numpy()
+    n_subgraphs = len(subgraphs)
 
     # Array list to store the edge_blocks.
     edge_block = []
     sparsity_block = []
     connectivity_block = []
 
+    # Only access to the lower triangular subgraphs
     # Iterate over a subgraph
-    for k in range(len(subgraphs)):
+    for k in range(n_subgraphs):
 
         # Check subgraphs that are connected
-        for i in range(len(subgraphs)):
+        for i in range(n_subgraphs):
 
             # Create a matrix of size (NodesK x NodesI) to store adj values
             sub_edge_block = np.zeros((len(subgraphs[k]), len(subgraphs[i])), dtype=float)
@@ -415,27 +438,39 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
             vertices_of_sk = len(subgraphs[k])
             vertices_of_si = len(subgraphs[i])
 
-            # Iterate over all the nodes of the subgraphs and for those with a value, store them.
-            for x in range(len(subgraphs[k])):
-                for y in range(len(subgraphs[i])):
-                    if(adj_numpy[subgraphs[k][x]][subgraphs[i][y]] != 0):
-                        sub_edge_block[x][y] = adj_numpy[subgraphs[k][x]][subgraphs[i][y]]
-                        n_connections += 1
+            if not i > k:
+                # Iterate over all the nodes of the subgraphs and for those with a value, store them.
+                for x in range(len(subgraphs[k])):
+                    for y in range(len(subgraphs[i])):
+                        if(adj_numpy[subgraphs[k][x]][subgraphs[i][y]] != 0):
+                            sub_edge_block[x][y] = adj_numpy[subgraphs[k][x]][subgraphs[i][y]]
+                            n_connections += 1
 
             # Append the subgraph edge block to the array list and the corresponding sparsity
-            edge_block.append(torch.FloatTensor(sub_edge_block))
+            edge_block.append(sub_edge_block)
             sparsity_block.append( round((float(100) - ((n_connections/(vertices_of_sk*vertices_of_si))*100)), 2) )
             connectivity_block.append(n_connections)
-    
+
     print_color(tcolors.OKCYAN, "\tComputing sparsity of edge blocks...")
-    for i in range(pow(len(subgraphs),2)):
-        # subgraph_k = int(i / len(subgraphs))
-        # subgraph_i = i % len(subgraphs)
-        # print("Sparsity of [" + str(subgraph_k) + "][" + str(subgraph_i) + "] -> " + str(sparsity_block[i]) + " = " + str(connectivity_block[i]) + "/(" + str(len(subgraphs[subgraph_k])) + "x" + str(len(subgraphs[subgraph_i])) + ").")
-        
-        # If the sparsity (of edge_block[i]) is bigger than sparsity_threshold, convert the given edge_block to sparse coo representation
-        if(sparsity_block[i] > sparsity_threshold ):
-            edge_block[i] = sparse_float_to_coo(edge_block[i])
+
+    for k in range(n_subgraphs):
+        for i in range(n_subgraphs):
+            # If the sparsity (of edge_block[k*subgraphs+i]) is bigger than sparsity_threshold, convert the given edge_block to sparse coo or csr representation
+            if not i > k:
+                if(sparsity_block[(k*int(n_subgraphs))+i] > sparsity_threshold ):
+                    edge_block[(k*int(n_subgraphs))+i] = numpy_to_coo(edge_block[(k*int(n_subgraphs))+i])
+                else:
+                    edge_block[(k*int(n_subgraphs))+i] = torch.FloatTensor(edge_block[(k*int(n_subgraphs))+i])
+    
+    # Finally, iterate over the superior triangular and transpose the lower triangular matrices
+    for k in range(n_subgraphs):
+        for i in range(n_subgraphs):
+            if i > k:
+                edge_block[(k*int(n_subgraphs))+i] = torch.t(edge_block[(i*int(n_subgraphs))+k])
+                connectivity_block[(k*int(len(subgraphs)))+i] = connectivity_block[(i*int(len(subgraphs)))+k]
+                sparsity_block[(k*int(len(subgraphs)))+i] = sparsity_block[(i*int(len(subgraphs)))+k]
+            
+            # print("Sparsity of [" + str(k) + "][" + str(i) + "] -> " + str(sparsity_block[(k*int(n_subgraphs))+i]) + " = " + str(connectivity_block[(k*int(n_subgraphs))+i]) + "/(" + str(len(subgraphs[k])) + "x" + str(len(subgraphs[i])) + ").")
 
     return edge_block, sparsity_block
 
@@ -568,13 +603,13 @@ def load_data(path="../data/cora/", dataset="cora"):
     # addition of an identity matrix of the same size (npapers*npapers)
     # then normalize it
     # NOTE: why does it sum a identity matrix ? are papers referencing themself ?
-    adj = normalize(adj + sp.eye(adj.shape[0]))
+    adj = normalize_adj(adj + sp.eye(adj.shape[0]))
 
     # normalize fetures matrix
     # why normalize? -> it makes the features more consistent with each other, 
     #                   which allows the model to predict outputs 
     #                   more accurately
-    features = normalize(features)
+    features = normalize_features(features)
 
     # creates 3 ranges, one for training, another one as values, and a final one for testing
     idx_train = range(140)
@@ -614,7 +649,7 @@ def load_data(path="../data/cora/", dataset="cora"):
     return adj, features, labels, idx_train, idx_val, idx_test, dataset
 
 
-def normalize(mx):
+def normalize_features(mx):
     """Row-normalize sparse matrix"""
     rowsum = np.array(mx.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
@@ -623,6 +658,12 @@ def normalize(mx):
     mx = r_mat_inv.dot(mx)
     return mx
 
+def normalize_adj(mx):
+    rowsum = np.array(mx.sum(1))
+    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+    return mx.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
 
 def accuracy(output, labels):
     preds = output.max(1)[1].type_as(labels)
@@ -640,20 +681,18 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
 
-def sparse_float_to_coo(sparse_float_mx):
+def numpy_to_coo(numpy_arr):
     indices = [[] for x in range(2)]
     values = []
 
-    for i in range(sparse_float_mx.shape[0]):
-        for j in range(sparse_float_mx.shape[1]):
-            if(sparse_float_mx[i][j] != 0):
+    for i in range(numpy_arr.shape[0]):
+        for j in range(numpy_arr.shape[1]):
+            if(numpy_arr[i][j] != 0):
                 indices[0].append(i)
                 indices[1].append(j)
-                values.append(sparse_float_mx[i][j].item())
+                values.append(numpy_arr[i][j])
 
-    sparse_coo_mx = torch.sparse_coo_tensor(indices, values, (sparse_float_mx.shape[0], sparse_float_mx.shape[1]))
-
-    return sparse_coo_mx
+    return torch.sparse_coo_tensor(indices, values, (numpy_arr.shape[0], numpy_arr.shape[1]))
 
 def get_animals_dic():
     return (

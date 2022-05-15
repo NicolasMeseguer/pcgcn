@@ -21,6 +21,8 @@ parser.add_argument('--fastmode', action='store_true', default=False,
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=200,
                     help='Number of epochs to train.')
+parser.add_argument('--no-epochs', action='store_true', default=False,
+                    help='Disables the epoch print.')
 parser.add_argument('--lr', type=float, default=0.01,
                     help='Initial learning rate.')
 parser.add_argument('--weight_decay', type=float, default=5e-4,
@@ -52,14 +54,10 @@ if not args.no_cuda:
     if(not torch.cuda.is_available()):
         print(print_color_return(tcolors.WARNING, "NOTE:") + " You tried using CUDA, but is " + print_color_return(tcolors.FAIL, "NOT") + " available... automatically turning it off. You can use '--no-cuda' to hide this error.")
 elif torch.cuda.is_available():
-    print("Running " + print_color_return(tcolors.WARNING, "WITHOUT CUDA") + ", but it's " + print_color_return(tcolors.OKGREEN, "available") + ".")
+    print("Running " + print_color_return(tcolors.WARNING, "WITHOUT CUDA") + ", but it is " + print_color_return(tcolors.OKGREEN, "available") + ".")
 
 # Enable CUDA if it's available and the user didn't say otherwise
 args.cuda = not args.no_cuda and torch.cuda.is_available()
-
-# Multithreaded model ?
-# WIP
-multith = False
 
 # Random seed
 np.random.seed(args.seed)
@@ -170,12 +168,13 @@ def train(epoch):
 
     loss_val = F.nll_loss(output[idx_val], labels[idx_val])
     acc_val = accuracy(output[idx_val], labels[idx_val])
-    print('Epoch: {:04d}'.format(epoch+1),
-          'loss_train: {:.4f}'.format(loss_train.item()),
-          'acc_train: {:.4f}'.format(acc_train.item()),
-          'loss_val: {:.4f}'.format(loss_val.item()),
-          'acc_val: {:.4f}'.format(acc_val.item()),
-          'time: {:.4f}s'.format(time.time() - t))
+    if not args.no_epochs:
+        print('Epoch: {:04d}'.format(epoch+1),
+            'loss_train: {:.4f}'.format(loss_train.item()),
+            'acc_train: {:.4f}'.format(acc_train.item()),
+            'loss_val: {:.4f}'.format(loss_val.item()),
+            'acc_val: {:.4f}'.format(acc_val.item()),
+            'time: {:.4f}s'.format(time.time() - t))
 
 
 def test():
