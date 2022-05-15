@@ -61,6 +61,12 @@ class GraphConvolution(Module):
 
     def forward(self, input, adj):
         # Step no. 6 (forwarding of the layers)
+        
+        # input is different (gcn vs pcgcn)
+        # print(input)
+
+        # self.weight is different (gcn vs pcgcn)
+        # print(self.weight)
 
         # combination
         support = torch.mm(input, self.weight)
@@ -71,7 +77,7 @@ class GraphConvolution(Module):
             support_subgraphs = self.split_support_mat(support)
 
             # 2. Execute subgrahs
-            agg_subgraphs = np.zeros((support.shape[0], self.out_features), dtype=np.double)
+            agg_subgraphs = np.zeros((support.shape[0], self.out_features), dtype=np.float32)
 
             # Execute graph propagation for each subgraph
             for k in range(len(self.subgraphs)):
@@ -86,14 +92,17 @@ class GraphConvolution(Module):
                     agg_subgraphs = self.sum_mat(agg_subgraphs, accumulation, self.subgraphs[k])
             
             # pcgcn output
-            output = torch.from_numpy(agg_subgraphs).float()
+            output = torch.from_numpy(agg_subgraphs).to(torch.float32)
 
         else:
             # forward sparse gcn output
             output = torch.spmm(adj, support)
             # forward dense gcn output
             # output = torch.mm(adj.to_dense(), support)
-        
+
+        # Seems to not be working...
+        # output = output.round()
+
         if self.bias is not None:
             return output + self.bias
         else:
