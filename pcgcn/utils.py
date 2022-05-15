@@ -423,8 +423,7 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
     sparsity_block = []
     connectivity_block = []
 
-    t1 = time.time()
-
+    # Only access to the lower triangular subgraphs
     # Iterate over a subgraph
     for k in range(n_subgraphs):
 
@@ -439,7 +438,6 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
             vertices_of_sk = len(subgraphs[k])
             vertices_of_si = len(subgraphs[i])
 
-            # Only iterate over the lower triangular
             if not i > k:
                 # Iterate over all the nodes of the subgraphs and for those with a value, store them.
                 for x in range(len(subgraphs[k])):
@@ -457,14 +455,9 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
 
     for k in range(n_subgraphs):
         for i in range(n_subgraphs):
-            # print("Sparsity of [" + str(k) + "][" + str(i) + "] -> " + str(sparsity_block[(k*int(n_subgraphs))+i]) + " = " + str(connectivity_block[(k*int(n_subgraphs))+i]) + "/(" + str(len(subgraphs[k])) + "x" + str(len(subgraphs[i])) + ").")
-            
             # If the sparsity (of edge_block[k*subgraphs+i]) is bigger than sparsity_threshold, convert the given edge_block to sparse coo or csr representation
-            # Keep iterating over the lower triangular
             if not i > k:
                 if(sparsity_block[(k*int(n_subgraphs))+i] > sparsity_threshold ):
-                    # edge_block[i] = sparse_float_to_coo(torch.FloatTensor(edge_block[(k*int(n_subgraphs))+i]))
-                    # edge_block[i] = numpy_to_csr(edge_block[(k*int(n_subgraphs))+i])
                     edge_block[(k*int(n_subgraphs))+i] = numpy_to_coo(edge_block[(k*int(n_subgraphs))+i])
                 else:
                     edge_block[(k*int(n_subgraphs))+i] = torch.FloatTensor(edge_block[(k*int(n_subgraphs))+i])
@@ -474,9 +467,10 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
         for i in range(n_subgraphs):
             if i > k:
                 edge_block[(k*int(n_subgraphs))+i] = torch.t(edge_block[(i*int(n_subgraphs))+k])
-
-    print("Total time elapsed: {:.4f}s".format(time.time() - t1))
-    exit(1)
+                connectivity_block[(k*int(len(subgraphs)))+i] = connectivity_block[(i*int(len(subgraphs)))+k]
+                sparsity_block[(k*int(len(subgraphs)))+i] = sparsity_block[(i*int(len(subgraphs)))+k]
+            
+            # print("Sparsity of [" + str(k) + "][" + str(i) + "] -> " + str(sparsity_block[(k*int(n_subgraphs))+i]) + " = " + str(connectivity_block[(k*int(n_subgraphs))+i]) + "/(" + str(len(subgraphs[k])) + "x" + str(len(subgraphs[i])) + ").")
 
     return edge_block, sparsity_block
 
@@ -687,9 +681,6 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
 
-def numpy_to_csr(numpy_arr):
-    return torch.tensor(numpy_arr, dtype = torch.float64).to_sparse_csr()
-
 def numpy_to_coo(numpy_arr):
     indices = [[] for x in range(2)]
     values = []
@@ -702,19 +693,6 @@ def numpy_to_coo(numpy_arr):
                 values.append(numpy_arr[i][j])
 
     return torch.sparse_coo_tensor(indices, values, (numpy_arr.shape[0], numpy_arr.shape[1]))
-
-def sparse_float_to_coo(sparse_float_mx):
-    indices = [[] for x in range(2)]
-    values = []
-
-    for i in range(sparse_float_mx.shape[0]):
-        for j in range(sparse_float_mx.shape[1]):
-            if(sparse_float_mx[i][j] != 0):
-                indices[0].append(i)
-                indices[1].append(j)
-                values.append(sparse_float_mx[i][j].item())
-
-    return torch.sparse_coo_tensor(indices, values, (sparse_float_mx.shape[0], sparse_float_mx.shape[1]))
 
 def get_animals_dic():
     return (
