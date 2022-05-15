@@ -416,17 +416,20 @@ def metis_partition(adj, nparts, dataset, path):
 def compute_edge_block(subgraphs, adj, sparsity_threshold):
 
     adj_numpy = adj.to_dense().numpy()
+    n_subgraphs = len(subgraphs)
 
     # Array list to store the edge_blocks.
     edge_block = []
     sparsity_block = []
     connectivity_block = []
 
+    t1 = time.time()
+
     # Iterate over a subgraph
-    for k in range(len(subgraphs)):
+    for k in range(n_subgraphs):
 
         # Check subgraphs that are connected
-        for i in range(len(subgraphs)):
+        for i in range(n_subgraphs):
 
             # Create a matrix of size (NodesK x NodesI) to store adj values
             sub_edge_block = np.zeros((len(subgraphs[k]), len(subgraphs[i])), dtype=float)
@@ -449,28 +452,31 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
             edge_block.append(sub_edge_block)
             sparsity_block.append( round((float(100) - ((n_connections/(vertices_of_sk*vertices_of_si))*100)), 2) )
             connectivity_block.append(n_connections)
-    
-    # Iterate over the superior triangular and transpose the lower matrices
-    for k in range(len(subgraphs)):
-        for i in range(len(subgraphs)):
-            if i > k:
-                edge_block[(k*int(len(subgraphs)))+i] = edge_block[(i*int(len(subgraphs)))+k].transpose()
-                sparsity_block[(k*int(len(subgraphs)))+i] = sparsity_block[(i*int(len(subgraphs)))+k]
-                connectivity_block[(k*int(len(subgraphs)))+i] = connectivity_block[(i*int(len(subgraphs)))+k]
-    
+
     print_color(tcolors.OKCYAN, "\tComputing sparsity of edge blocks...")
-    for i in range(pow(len(subgraphs),2)):
-        # subgraph_k = int(i / len(subgraphs))
-        # subgraph_i = i % len(subgraphs)
-        # print("Sparsity of [" + str(subgraph_k) + "][" + str(subgraph_i) + "] -> " + str(sparsity_block[i]) + " = " + str(connectivity_block[i]) + "/(" + str(len(subgraphs[subgraph_k])) + "x" + str(len(subgraphs[subgraph_i])) + ").")
-        
-        # If the sparsity (of edge_block[i]) is bigger than sparsity_threshold, convert the given edge_block to sparse coo or csr representation
-        if(sparsity_block[i] > sparsity_threshold ):
-            # edge_block[i] = sparse_float_to_coo(torch.FloatTensor(edge_block[i]))
-            # edge_block[i] = numpy_to_csr(edge_block[i])
-            edge_block[i] = numpy_to_coo(edge_block[i])
-        else:
-            edge_block[i] = torch.FloatTensor(edge_block[i])
+
+    for k in range(n_subgraphs):
+        for i in range(n_subgraphs):
+            # print("Sparsity of [" + str(k) + "][" + str(i) + "] -> " + str(sparsity_block[(k*int(n_subgraphs))+i]) + " = " + str(connectivity_block[(k*int(n_subgraphs))+i]) + "/(" + str(len(subgraphs[k])) + "x" + str(len(subgraphs[i])) + ").")
+            
+            # If the sparsity (of edge_block[k*subgraphs+i]) is bigger than sparsity_threshold, convert the given edge_block to sparse coo or csr representation
+            # Keep iterating over the lower triangular
+            if not i > k:
+                if(sparsity_block[(k*int(n_subgraphs))+i] > sparsity_threshold ):
+                    # edge_block[i] = sparse_float_to_coo(torch.FloatTensor(edge_block[(k*int(n_subgraphs))+i]))
+                    # edge_block[i] = numpy_to_csr(edge_block[(k*int(n_subgraphs))+i])
+                    edge_block[(k*int(n_subgraphs))+i] = numpy_to_coo(edge_block[(k*int(n_subgraphs))+i])
+                else:
+                    edge_block[(k*int(n_subgraphs))+i] = torch.FloatTensor(edge_block[(k*int(n_subgraphs))+i])
+    
+    # Finally, iterate over the superior triangular and transpose the lower triangular matrices
+    for k in range(n_subgraphs):
+        for i in range(n_subgraphs):
+            if i > k:
+                edge_block[(k*int(n_subgraphs))+i] = torch.t(edge_block[(i*int(n_subgraphs))+k])
+
+    print("Total time elapsed: {:.4f}s".format(time.time() - t1))
+    exit(1)
 
     return edge_block, sparsity_block
 
