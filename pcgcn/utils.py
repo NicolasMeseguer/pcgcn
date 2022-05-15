@@ -8,7 +8,7 @@ import sys
 import random
 
 # print full size of matrices
-# np.set_printoptions(threshold=np.inf)
+np.set_printoptions(threshold=np.inf)
 
 # Print useful messages in different colors
 class tcolors:
