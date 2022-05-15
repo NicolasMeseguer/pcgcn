@@ -114,6 +114,9 @@ if not args.gcn:
     edge_blocks, sparsity_blocks = compute_edge_block(subgraphs, adj, args.sparsity_threshold)
     print_color(tcolors.OKGREEN, "\tDone !")
 
+# print(edge_block)
+# exit(1)
+
 # Model and optimizer
 # Step no. 1
 model = GCN(nfeat=features.shape[1],

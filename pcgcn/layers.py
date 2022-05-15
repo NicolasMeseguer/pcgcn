@@ -88,11 +88,14 @@ class GraphConvolution(Module):
             # pcgcn output
             output = torch.from_numpy(agg_subgraphs).float()
 
+            print(output)
+
         else:
             # forward sparse gcn output
             output = torch.spmm(adj, support)
             # forward dense gcn output
             # output = torch.mm(adj.to_dense(), support)
+            print(output)
         
         if self.bias is not None:
             return output + self.bias

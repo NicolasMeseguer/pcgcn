@@ -234,8 +234,8 @@ def dataset_load(dataset, tool, path):
             labels[n] = label_row
         
         # Finally store them
-        np.savetxt(features_path, features, header=str(features_size) + ' ' + str(max_features))
-        np.savetxt(labels_path, labels, header=str(labels_size))
+        np.savetxt(features_path, features, fmt='%.0f', header=str(features_size) + ' ' + str(max_features))
+        np.savetxt(labels_path, labels, fmt='%.0f', header=str(labels_size))
 
     else:
         # Read the files and retrieve the features and labels
@@ -249,11 +249,15 @@ def dataset_load(dataset, tool, path):
 
         labels_size = int(str(open(labels_path).readline()).replace('# ',''))
 
+    ###################################
+    ### NOW COMES THE POSTPROCESS ! ###
+    ###################################
+
     # Make the Adj symmetric
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
 
     # Normalize it
-    adj = normalize(adj + sp.eye(adj.shape[0]))
+    adj = normalize_adj(adj + sp.eye(adj.shape[0]))
 
     # convert adjacency (scipy sparse) coo matrix to a (torch sparse) coo tensor
     adj = sparse_mx_to_torch_sparse_tensor(adj)
@@ -262,7 +266,7 @@ def dataset_load(dataset, tool, path):
     features = sp.csr_matrix(features, dtype=np.float32)
 
     # Normalize it
-    features = normalize(features)
+    features = normalize_features(features)
 
     # features csr matrix to float tensor representation (the full matrix)
     features = torch.FloatTensor(np.array(features.todense()))
@@ -400,7 +404,7 @@ def metis_partition(adj, nparts, dataset, path):
 
     tmpVertex = 0
     for line in fileDump:
-        partitions[line].append(tmpVertex)
+        partitions[int(line)].append(tmpVertex)
         tmpVertex += 1
 
     return partitions
@@ -432,17 +436,27 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
             vertices_of_sk = len(subgraphs[k])
             vertices_of_si = len(subgraphs[i])
 
-            # Iterate over all the nodes of the subgraphs and for those with a value, store them.
-            for x in range(len(subgraphs[k])):
-                for y in range(len(subgraphs[i])):
-                    if(adj_numpy[subgraphs[k][x]][subgraphs[i][y]] != 0):
-                        sub_edge_block[x][y] = adj_numpy[subgraphs[k][x]][subgraphs[i][y]]
-                        n_connections += 1
+            # Only iterate over the lower triangular
+            if not i > k:
+                # Iterate over all the nodes of the subgraphs and for those with a value, store them.
+                for x in range(len(subgraphs[k])):
+                    for y in range(len(subgraphs[i])):
+                        if(adj_numpy[subgraphs[k][x]][subgraphs[i][y]] != 0):
+                            sub_edge_block[x][y] = adj_numpy[subgraphs[k][x]][subgraphs[i][y]]
+                            n_connections += 1
 
             # Append the subgraph edge block to the array list and the corresponding sparsity
-            edge_block.append(torch.FloatTensor(sub_edge_block))
+            edge_block.append(sub_edge_block)
             sparsity_block.append( round((float(100) - ((n_connections/(vertices_of_sk*vertices_of_si))*100)), 2) )
             connectivity_block.append(n_connections)
+    
+    # Iterate over the superior triangular and transpose the lower matrices
+    for k in range(len(subgraphs)):
+        for i in range(len(subgraphs)):
+            if i > k:
+                edge_block[(k*int(len(subgraphs)))+i] = edge_block[(i*int(len(subgraphs)))+k].transpose()
+                sparsity_block[(k*int(len(subgraphs)))+i] = sparsity_block[(i*int(len(subgraphs)))+k]
+                connectivity_block[(k*int(len(subgraphs)))+i] = connectivity_block[(i*int(len(subgraphs)))+k]
     
     print_color(tcolors.OKCYAN, "\tComputing sparsity of edge blocks...")
     for i in range(pow(len(subgraphs),2)):
@@ -450,9 +464,13 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
         # subgraph_i = i % len(subgraphs)
         # print("Sparsity of [" + str(subgraph_k) + "][" + str(subgraph_i) + "] -> " + str(sparsity_block[i]) + " = " + str(connectivity_block[i]) + "/(" + str(len(subgraphs[subgraph_k])) + "x" + str(len(subgraphs[subgraph_i])) + ").")
         
-        # If the sparsity (of edge_block[i]) is bigger than sparsity_threshold, convert the given edge_block to sparse coo representation
+        # If the sparsity (of edge_block[i]) is bigger than sparsity_threshold, convert the given edge_block to sparse coo or csr representation
         if(sparsity_block[i] > sparsity_threshold ):
-            edge_block[i] = sparse_float_to_coo(edge_block[i])
+            # edge_block[i] = sparse_float_to_coo(torch.FloatTensor(edge_block[i]))
+            # edge_block[i] = numpy_to_csr(edge_block[i])
+            edge_block[i] = numpy_to_coo(edge_block[i])
+        else:
+            edge_block[i] = torch.FloatTensor(edge_block[i])
 
     return edge_block, sparsity_block
 
@@ -585,13 +603,13 @@ def load_data(path="../data/cora/", dataset="cora"):
     # addition of an identity matrix of the same size (npapers*npapers)
     # then normalize it
     # NOTE: why does it sum a identity matrix ? are papers referencing themself ?
-    adj = normalize(adj + sp.eye(adj.shape[0]))
+    adj = normalize_adj(adj + sp.eye(adj.shape[0]))
 
     # normalize fetures matrix
     # why normalize? -> it makes the features more consistent with each other, 
     #                   which allows the model to predict outputs 
     #                   more accurately
-    features = normalize(features)
+    features = normalize_features(features)
 
     # creates 3 ranges, one for training, another one as values, and a final one for testing
     idx_train = range(140)
@@ -631,7 +649,7 @@ def load_data(path="../data/cora/", dataset="cora"):
     return adj, features, labels, idx_train, idx_val, idx_test, dataset
 
 
-def normalize(mx):
+def normalize_features(mx):
     """Row-normalize sparse matrix"""
     rowsum = np.array(mx.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
@@ -640,6 +658,12 @@ def normalize(mx):
     mx = r_mat_inv.dot(mx)
     return mx
 
+def normalize_adj(mx):
+    rowsum = np.array(mx.sum(1))
+    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+    return mx.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
 
 def accuracy(output, labels):
     preds = output.max(1)[1].type_as(labels)
@@ -657,6 +681,22 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
 
+def numpy_to_csr(numpy_arr):
+    return torch.tensor(numpy_arr, dtype = torch.float64).to_sparse_csr()
+
+def numpy_to_coo(numpy_arr):
+    indices = [[] for x in range(2)]
+    values = []
+
+    for i in range(numpy_arr.shape[0]):
+        for j in range(numpy_arr.shape[1]):
+            if(numpy_arr[i][j] != 0):
+                indices[0].append(i)
+                indices[1].append(j)
+                values.append(numpy_arr[i][j])
+
+    return torch.sparse_coo_tensor(indices, values, (numpy_arr.shape[0], numpy_arr.shape[1]))
+
 def sparse_float_to_coo(sparse_float_mx):
     indices = [[] for x in range(2)]
     values = []
@@ -668,9 +708,7 @@ def sparse_float_to_coo(sparse_float_mx):
                 indices[1].append(j)
                 values.append(sparse_float_mx[i][j].item())
 
-    sparse_coo_mx = torch.sparse_coo_tensor(indices, values, (sparse_float_mx.shape[0], sparse_float_mx.shape[1]))
-
-    return sparse_coo_mx
+    return torch.sparse_coo_tensor(indices, values, (sparse_float_mx.shape[0], sparse_float_mx.shape[1]))
 
 def get_animals_dic():
     return (
