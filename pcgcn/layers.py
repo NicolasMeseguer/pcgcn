@@ -68,10 +68,7 @@ class GraphConvolution(Module):
         for s in range(nparts):
             t = threading.Thread(target=self.split_mat, args=(splitted_features[s], features_matrix, s))
             t.start()
-            threads.append(t)
-        
-        for thread in threads:
-            thread.join()
+            t.join()
 
         return splitted_features
 
@@ -95,7 +92,9 @@ class GraphConvolution(Module):
         support = torch.mm(input, self.weight)
 
         if not self.compute_gcn:
-            # aggregation
+            # Number of subgraphs
+            n_subgraphs = len(self.subgraphs)
+
             # 1. Split a of l (support) according to subgraphs
             support_subgraphs = self.split_support_mat(support)
 
@@ -103,14 +102,15 @@ class GraphConvolution(Module):
             agg_subgraphs = np.zeros((support.shape[0], self.out_features), dtype=np.float32)
 
             # Execute graph propagation for each subgraph
-            for k in range(len(self.subgraphs)):
+            for k in range(n_subgraphs):
                 # Gather and accumulate states from neighbor subgraphs
-                for i in range(len(self.subgraphs)):
+                for i in range(n_subgraphs):
+                    pos = (k*n_subgraphs)+i
                     # calculate edge block (depending on its sparsity) & transform it to torch
-                    if(self.sparsity_block[k*len(self.subgraphs)+i] > self.sparsity_threshold):
-                        accumulation = (torch.spmm(self.edge_block[k*len(self.subgraphs)+i], support_subgraphs[i])).detach().numpy()
+                    if(self.sparsity_block[pos] > self.sparsity_threshold):
+                        accumulation = (torch.spmm(self.edge_block[pos], support_subgraphs[i])).detach().numpy()
                     else:
-                        accumulation = (torch.mm(self.edge_block[k*len(self.subgraphs)+i], support_subgraphs[i])).detach().numpy()
+                        accumulation = (torch.mm(self.edge_block[pos], support_subgraphs[i])).detach().numpy()
                     # 3. Combine hidden states
                     agg_subgraphs = self.sum_mat(agg_subgraphs, accumulation, self.subgraphs[k])
 
@@ -123,8 +123,9 @@ class GraphConvolution(Module):
             # forward dense gcn output
             # output = torch.mm(adj.to_dense(), support)
 
-        # Seems to not be working...
-        # output = output.round()
+        # Round values (work-around since Torch does not implement a rounding function in this version yet)
+        for i, t in enumerate(output):
+            output[i] = torch.from_numpy(np.around(t.detach().numpy(), decimals=3)).to(torch.float32)
 
         if self.bias is not None:
             return output + self.bias

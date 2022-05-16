@@ -431,7 +431,7 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
         for i in range(n_subgraphs):
 
             # Create a matrix of size (NodesK x NodesI) to store adj values
-            sub_edge_block = np.zeros((len(subgraphs[k]), len(subgraphs[i])), dtype=float)
+            sub_edge_block = np.zeros((len(subgraphs[k]), len(subgraphs[i])), dtype=np.float32)
 
             # Variables to check the sparsity
             n_connections = 0

@@ -150,11 +150,10 @@ def train(epoch):
     optimizer.zero_grad()
     # Step no. 4
     output = model(features, adj)
-
     # Step no. 7
     loss_train = F.nll_loss(output[idx_train], labels[idx_train])
     acc_train = accuracy(output[idx_train], labels[idx_train])
-    loss_train.backward()
+    # loss_train.backward()
     optimizer.step()
 
     if not args.fastmode:
@@ -165,7 +164,7 @@ def train(epoch):
         model.eval()
         # Step no. 8, fastmode disabled
         output = model(features, adj)
-
+    
     loss_val = F.nll_loss(output[idx_val], labels[idx_val])
     acc_val = accuracy(output[idx_val], labels[idx_val])
     if not args.no_epochs:
@@ -180,10 +179,6 @@ def train(epoch):
 def test():
     model.eval()
     output = model(features, adj)
-    
-    print(output.detach().numpy())
-    exit(1)
-    
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
     acc_test = accuracy(output[idx_test], labels[idx_test])
     print("Test set results:",
