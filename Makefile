@@ -20,10 +20,10 @@ uninstallrmat:
 
 # Executes PCGCN model
 runpcgcn:
-	cd pcgcn; python train.py --no-cuda --rmat Magenta_Spoonbill --epochs 8 --partition metis --nparts 2;
+	cd pcgcn; python train.py --no-cuda --rmat Magenta_Spoonbill --epochs 4 --partition metis --nparts 4;
 
 rungcn:
-	cd pcgcn; python train.py --no-cuda --rmat Magenta_Spoonbill --epochs 8 --gcn;
+	cd pcgcn; python train.py --no-cuda --rmat Magenta_Spoonbill --epochs 4 --gcn;
 
 runtest:
 	echo "Here you can submit the python script several times, and output the exit to a txt file..."

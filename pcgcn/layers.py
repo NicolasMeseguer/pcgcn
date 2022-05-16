@@ -2,6 +2,8 @@ import math
 
 import torch
 import numpy as np
+import time
+import threading
 
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
@@ -39,16 +41,37 @@ class GraphConvolution(Module):
 
     def split_support_mat(self, features_matrix):
         nparts = len(self.subgraphs)
-        features_matrix_np = features_matrix.detach().numpy()
         splitted_features = [[] for x in range(nparts)]
 
-        # Iterate over the number of subgraphs
-        for i in range(nparts):
-            # Iterate over the vectors of a subgraph
-            K = []
-            for j in range(len(self.subgraphs[i])):
-                K.append(features_matrix_np[self.subgraphs[i][j],:].tolist())
-            splitted_features[i] = torch.FloatTensor(K)
+        for i, t in enumerate(features_matrix):
+            for s in range(nparts):
+                if i in self.subgraphs[s]:
+                    splitted_features[s].append(t)
+        
+        for s in range(nparts):
+            splitted_features[s] = torch.FloatTensor(torch.stack(splitted_features[s]))
+
+        return splitted_features
+
+    def split_mat(self, arr, features_matrix, subgraph):
+        for i, t in enumerate(features_matrix):
+            if i in self.subgraphs[subgraph]:
+                arr.append(t)
+        
+        arr = torch.FloatTensor(torch.stack(arr))
+
+    def parallel_split_support_mat(self, features_matrix):
+        nparts = len(self.subgraphs)
+        splitted_features = [[] for x in range(nparts)]
+        threads = []
+        
+        for s in range(nparts):
+            t = threading.Thread(target=self.split_mat, args=(splitted_features[s], features_matrix, s))
+            t.start()
+            threads.append(t)
+        
+        for thread in threads:
+            thread.join()
 
         return splitted_features
 
@@ -85,12 +108,12 @@ class GraphConvolution(Module):
                 for i in range(len(self.subgraphs)):
                     # calculate edge block (depending on its sparsity) & transform it to torch
                     if(self.sparsity_block[k*len(self.subgraphs)+i] > self.sparsity_threshold):
-                        accumulation = (torch.spmm(self.edge_block[k*len(self.subgraphs)+i], support_subgraphs[i])).numpy()
+                        accumulation = (torch.spmm(self.edge_block[k*len(self.subgraphs)+i], support_subgraphs[i])).detach().numpy()
                     else:
-                        accumulation = (torch.mm(self.edge_block[k*len(self.subgraphs)+i], support_subgraphs[i])).numpy()
+                        accumulation = (torch.mm(self.edge_block[k*len(self.subgraphs)+i], support_subgraphs[i])).detach().numpy()
                     # 3. Combine hidden states
                     agg_subgraphs = self.sum_mat(agg_subgraphs, accumulation, self.subgraphs[k])
-            
+
             # pcgcn output
             output = torch.from_numpy(agg_subgraphs).to(torch.float32)
 

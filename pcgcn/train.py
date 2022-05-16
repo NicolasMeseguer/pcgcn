@@ -151,9 +151,6 @@ def train(epoch):
     # Step no. 4
     output = model(features, adj)
 
-    print(output.detach().numpy())
-    exit(1)
-
     # Step no. 7
     loss_train = F.nll_loss(output[idx_train], labels[idx_train])
     acc_train = accuracy(output[idx_train], labels[idx_train])
@@ -183,6 +180,10 @@ def train(epoch):
 def test():
     model.eval()
     output = model(features, adj)
+    
+    print(output.detach().numpy())
+    exit(1)
+    
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
     acc_test = accuracy(output[idx_test], labels[idx_test])
     print("Test set results:",
