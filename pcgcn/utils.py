@@ -183,8 +183,12 @@ def dataset_load(dataset, tool, path):
     if(tool == "Graphlaxy"):
         n_vert = int(edges[edges.shape[0]-1, : 1,]+1)
     elif(tool == "RMAT"):
-        n_vert  = int(np.amax(edges)) + 1
-
+        try:
+            n_vert  = int(np.amax(edges)) + 1
+        except:
+            print_color(tcolors.FAIL, "\tThe generated graph is empty (empty file).\n\tTry with smaller vertices/edges.\nExiting now..." )
+            exit(1)
+    
     # Adj matrix
     adj = sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])),
                             shape=(n_vert, n_vert),
