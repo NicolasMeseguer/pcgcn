@@ -153,9 +153,9 @@ def train(epoch):
     # Step no. 7
     loss_train = F.nll_loss(output[idx_train], labels[idx_train])
     acc_train = accuracy(output[idx_train], labels[idx_train])
+    # This steps backpropagates the loss information, here the final result may vary.
     loss_train.backward()
     optimizer.step()
-
 
     if not args.fastmode:
         # Evaluate validation set performance separately,
@@ -165,7 +165,7 @@ def train(epoch):
         model.eval()
         # Step no. 8, fastmode disabled
         output = model(features, adj)
-
+    
     loss_val = F.nll_loss(output[idx_val], labels[idx_val])
     acc_val = accuracy(output[idx_val], labels[idx_val])
     if not args.no_epochs:
