@@ -39,7 +39,8 @@ class GraphConvolution(Module):
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
 
-    def split_support_mat(self, features_matrix):
+    # This is an implementation using Torch
+    def split_support_mat_two(self, features_matrix):
         nparts = len(self.subgraphs)
         splitted_features = [[] for x in range(nparts)]
 
@@ -60,6 +61,7 @@ class GraphConvolution(Module):
         
         arr = torch.FloatTensor(torch.stack(arr))
 
+    # Parallel implementation using torch
     def parallel_split_support_mat(self, features_matrix):
         nparts = len(self.subgraphs)
         splitted_features = [[] for x in range(nparts)]
@@ -72,22 +74,31 @@ class GraphConvolution(Module):
 
         return splitted_features
 
+    # Addition of rows to a bigger matrix
     def sum_mat(self, mat1, mat2, nodes):
         for i in range(len(nodes)):
             mat1[nodes[i]] += mat2[i]
         
         return mat1
 
+    # Split features matrix using numpy
+    def split_support_mat(self, features_matrix):
+        nparts = len(self.subgraphs)
+        features_matrix_np = features_matrix.detach().numpy()
+        splitted_features = [[] for x in range(nparts)]
+
+        # Iterate over the number of subgraphs
+        for i in range(nparts):
+            # Iterate over the vectors of a subgraph
+            K = []
+            for j in range(len(self.subgraphs[i])):
+                K.append(features_matrix_np[self.subgraphs[i][j],:].tolist())
+            splitted_features[i] = torch.FloatTensor(K)
+
+        return splitted_features
 
     def forward(self, input, adj):
         # Step no. 6 (forwarding of the layers)
-        
-        # input is different (gcn vs pcgcn)
-        # print(input)
-
-        # self.weight is different (gcn vs pcgcn)
-        # print(self.weight)
-
         # combination
         support = torch.mm(input, self.weight)
 
