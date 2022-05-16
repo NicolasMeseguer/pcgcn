@@ -186,7 +186,13 @@ def dataset_load(dataset, tool, path):
         try:
             n_vert  = int(np.amax(edges)) + 1
         except:
-            print_color(tcolors.FAIL, "\tThe generated graph is empty (empty file).\n\tTry with smaller vertices/edges.\nExiting now..." )
+            print_color(tcolors.FAIL, "\tThe generated graph is empty (deleting file...).\n\tTry with smaller vertices/edges.\nExiting now..." )
+
+            # Delete the file
+            command = 'rm ' + graph_path
+
+            remove_grmat = subprocess.Popen(command, shell = True, stdout = subprocess.PIPE)
+            remove_grmat.wait()
             exit(1)
     
     # Adj matrix
