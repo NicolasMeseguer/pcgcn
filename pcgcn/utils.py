@@ -171,7 +171,7 @@ def dataset_load(dataset, tool, path):
         print_color(tcolors.FAIL, "\tThe specified dataset: " + dataset_name + " could not be found in " + graph_path + " !\nExiting now...")
         exit(1)
     
-    print('\tLoading ' + print_color_return(tcolors.UNDERLINE, dataset_name) + ' dataset...')
+    # print('\tLoading ' + print_color_return(tcolors.UNDERLINE, dataset_name) + ' dataset...')
 
     # Read the graph
     with open(graph_path, 'r') as g:
@@ -295,10 +295,10 @@ def dataset_load(dataset, tool, path):
     idx_test = torch.LongTensor(idx_test)
 
     # Print general parameters about the dataset
-    print("\t\tVertices  " + print_color_return(tcolors.UNDERLINE, "# " + str(n_vert)))
-    print("\t\tEdges  " + print_color_return(tcolors.UNDERLINE, "# " + str(n_edges)))
-    print("\t\tFeatures " + print_color_return(tcolors.UNDERLINE, "# " + str(features_size)) + " (max per vector " + print_color_return(tcolors.UNDERLINE, "# " + str(max_features)) + ")")
-    print("\t\tLabels " + print_color_return(tcolors.UNDERLINE, "# " + str(labels_size)))
+    # print("\t\tVertices  " + print_color_return(tcolors.UNDERLINE, "# " + str(n_vert)))
+    # print("\t\tEdges  " + print_color_return(tcolors.UNDERLINE, "# " + str(n_edges)))
+    # print("\t\tFeatures " + print_color_return(tcolors.UNDERLINE, "# " + str(features_size)) + " (max per vector " + print_color_return(tcolors.UNDERLINE, "# " + str(max_features)) + ")")
+    # print("\t\tLabels " + print_color_return(tcolors.UNDERLINE, "# " + str(labels_size)))
 
     # print("\tPreparing ranges of edges for labels (train, values and test)...")
 
@@ -306,7 +306,7 @@ def dataset_load(dataset, tool, path):
     # print("\t\tidx_val " + print_color_return(tcolors.UNDERLINE, "# [" + str(int(n_vert*0.2)+1) + ", " + str(int(n_vert*0.7)) + "]"))
     # print("\t\tidx_test " + print_color_return(tcolors.UNDERLINE, "# [" + str(int(n_vert*0.7)+1) + ", " + str(n_vert) + "]"))
     
-    print_color(tcolors.OKGREEN, "\tDone !")
+    # print_color(tcolors.OKGREEN, "\tDone !")
 
     return adj, features, labels, idx_train, idx_val, idx_test, dataset_name
 
@@ -335,7 +335,7 @@ def metis_partition(adj, nparts, dataset, path):
 
     # If the dataset is not transformed to METIS then, do it
     if not os.path.isfile(graphpath):
-        print_color(tcolors.OKCYAN, "\tConverting to METIS...")
+        # print_color(tcolors.OKCYAN, "\tConverting to METIS...")
 
         # Get the vector and edge size
         nvectors = int(adj.shape[0])
@@ -347,7 +347,7 @@ def metis_partition(adj, nparts, dataset, path):
         # If the number of edges is odd, remove one
         if(int(adj._nnz()) % 2 != 0):
             indexes_sparse = np.delete(indexes_sparse, 0, 1)
-            print_color(tcolors.WARNING, "\tWARNING: The first edge [0][0] will be removed...\n\tNumber of edges is odd.")
+            # print_color(tcolors.WARNING, "\tWARNING: The first edge [0][0] will be removed...\n\tNumber of edges is odd.")
         
         content = ""
         linetowrite = ""
@@ -375,7 +375,7 @@ def metis_partition(adj, nparts, dataset, path):
         print_color(tcolors.FAIL, "\tYou MUST install METIS in order to use 'metis' as the partitioning algorithm.\nExiting now..." )
         exit(1)
     
-    print_color(tcolors.OKCYAN, "\tCalling METIS...")
+    # print_color(tcolors.OKCYAN, "\tCalling METIS...")
 
     # Prepare the METIS output
     outputpath = graphpath + ".part." + str(nparts)
@@ -396,8 +396,8 @@ def metis_partition(adj, nparts, dataset, path):
         if not os.path.isfile(outputpath):
             print_color(tcolors.FAIL, "\tMETIS output not found, even when it was executed...\nExiting now...")
             exit(1)
-    else:
-        print("\t" + print_color_return(tcolors.UNDERLINE, "Previous output") + " found (" + outputpath + ").\n\t" + print_color_return(tcolors.UNDERLINE, "Delete it") + " to generate a new METIS output.")
+    # else:
+        # print("\t" + print_color_return(tcolors.UNDERLINE, "Previous output") + " found (" + outputpath + ").\n\t" + print_color_return(tcolors.UNDERLINE, "Delete it") + " to generate a new METIS output.")
             
     # At this point, either the file exists or was already generated
     graphfile = open(outputpath, "r")
@@ -461,7 +461,7 @@ def compute_edge_block(subgraphs, adj, sparsity_threshold):
             sparsity_block.append( round((float(100) - ((n_connections/(vertices_of_sk*vertices_of_si))*100)), 2) )
             connectivity_block.append(n_connections)
 
-    print_color(tcolors.OKCYAN, "\tComputing sparsity of edge blocks...")
+    # print_color(tcolors.OKCYAN, "\tComputing sparsity of edge blocks...")
 
     for k in range(n_subgraphs):
         for i in range(n_subgraphs):
@@ -495,7 +495,7 @@ def load_data(path="../data/cora/", dataset="cora"):
     The cora.cites file contains 5429 (edges) citations from one paper to another (nodes).
     """
 
-    print('\tLoading ' + print_color_return(tcolors.UNDERLINE, dataset) + ' dataset...')
+    # print('\tLoading ' + print_color_return(tcolors.UNDERLINE, dataset) + ' dataset...')
 
     if dataset == "cora":
         # extract content (all) from cora (.content) and store it in a str matrix
@@ -654,7 +654,7 @@ def load_data(path="../data/cora/", dataset="cora"):
     idx_val = torch.LongTensor(idx_val)
     idx_test = torch.LongTensor(idx_test)
     
-    print_color(tcolors.OKGREEN, "\tDone !")
+    # print_color(tcolors.OKGREEN, "\tDone !")
 
     return adj, features, labels, idx_train, idx_val, idx_test, dataset
 

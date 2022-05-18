@@ -53,8 +53,8 @@ args = parser.parse_args()
 if not args.no_cuda:
     if(not torch.cuda.is_available()):
         print(print_color_return(tcolors.WARNING, "NOTE:") + " You tried using CUDA, but is " + print_color_return(tcolors.FAIL, "NOT") + " available... automatically turning it off. You can use '--no-cuda' to hide this error.")
-elif torch.cuda.is_available():
-    print("Running " + print_color_return(tcolors.WARNING, "WITHOUT CUDA") + ", but it is " + print_color_return(tcolors.OKGREEN, "available") + ".")
+# elif torch.cuda.is_available():
+    # print("Running " + print_color_return(tcolors.WARNING, "WITHOUT CUDA") + ", but it is " + print_color_return(tcolors.OKGREEN, "available") + ".")
 
 # Enable CUDA if it's available and the user didn't say otherwise
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -66,7 +66,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load Data
-print("Processing dataset... ")
+# print("Processing dataset... ")
 if args.graphlaxy != "" or args.rmat != "":
 
     # Sanity check of the tool
@@ -97,7 +97,7 @@ subgraphs = None
 edge_blocks = None
 sparsity_blocks = None
 if not args.gcn:
-    print("Partitioning graph...")
+    # print("Partitioning graph...")
 
     # partitions the graph into args.nparts
     if args.partition.lower() == "metis":
@@ -107,12 +107,12 @@ if not args.gcn:
     else:
         print_color(tcolors.FAIL, "\tNo partition algorithm selected !\nExiting now...")
         exit(1)
-    print_color(tcolors.OKGREEN, "\tDone !")
+    # print_color(tcolors.OKGREEN, "\tDone !")
 
     # based on the subgraphs and the adj matrix, get the edgeblocks (the edge_blocks representation can be either dense (float tensor) or sparse (coo tensor)).
-    print_color(tcolors.OKCYAN, "\tComputing edge blocks...")
+    # print_color(tcolors.OKCYAN, "\tComputing edge blocks...")
     edge_blocks, sparsity_blocks = compute_edge_block(subgraphs, adj, args.sparsity_threshold)
-    print_color(tcolors.OKGREEN, "\tDone !")
+    # print_color(tcolors.OKGREEN, "\tDone !")
 
 # Model and optimizer
 # Step no. 1
@@ -140,8 +140,8 @@ if args.cuda and args.gcn:
 elif args.cuda and not args.gcn:
     print("-- PCGCN not available on CUDA (yet) --")
     exit(1)
-else:
-    print("-- Running on CPU --")
+# else:
+    # print("-- Running on CPU --")
 
 
 def train(epoch):
@@ -182,17 +182,17 @@ def test():
     output = model(features, adj)
     loss_test = F.nll_loss(output[idx_test], labels[idx_test])
     acc_test = accuracy(output[idx_test], labels[idx_test])
-    print("Test set results:",
-          "loss= {:.4f}".format(loss_test.item()),
-          "accuracy= {:.4f}".format(acc_test.item()))
+    # print("Test set results:",
+    #       "loss= {:.4f}".format(loss_test.item()),
+    #       "accuracy= {:.4f}".format(acc_test.item()))
 
 # Train model
 t_total = time.time()
 for epoch in range(args.epochs):
     train(epoch)
-print_color(tcolors.OKGREEN, "Optimization Finished!")
+# print_color(tcolors.OKGREEN, "Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
 # Testing
-print("-- Now Testing --")
+# print("-- Now Testing --")
 test()
