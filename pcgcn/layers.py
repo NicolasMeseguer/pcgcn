@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import time
 import threading
+import concurrent.futures
 
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
@@ -26,6 +27,7 @@ class GraphConvolution(Module):
         self.sparsity_block = sparsity_blocks
         self.sparsity_threshold = sparsity_threshold
         self.compute_gcn = compute_gcn
+        self.features_matrix = None
         self.weight = Parameter(torch.FloatTensor(in_features, out_features))
         if bias:
             self.bias = Parameter(torch.FloatTensor(out_features))
@@ -39,8 +41,17 @@ class GraphConvolution(Module):
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
 
-    # This is an implementation using Torch
-    def split_support_mat_two(self, features_matrix):
+    # Addition of rows to a bigger matrix
+    def sum_mat(self, mat1, mat2, nodes):
+        for i in range(len(nodes)):
+            mat1[nodes[i]] += mat2[i]
+        
+        return mat1
+
+    """ HERE GOES THE DIFFERENT IMPLEMENTATIONS TO SPLIT THE FEATURES MATRIX (NumPy or PyTorch)"""
+
+    # Split features matrix using PyTorch (SEQ)
+    def torch_split_support_mat(self, features_matrix):
         nparts = len(self.subgraphs)
         splitted_features = [[] for x in range(nparts)]
 
@@ -54,37 +65,31 @@ class GraphConvolution(Module):
 
         return splitted_features
 
-    def split_mat(self, arr, features_matrix, subgraph):
+    # Parallel PyTorch function
+    def torch_split_mat(self, arr, features_matrix, subgraph):
         for i, t in enumerate(features_matrix):
             if i in self.subgraphs[subgraph]:
                 arr.append(t)
         
         arr = torch.FloatTensor(torch.stack(arr))
 
-    # Parallel implementation using torch
-    def parallel_split_support_mat(self, features_matrix):
+    # Split features matrix using a parallel implementation based on PyTorch
+    def parallel_torch_split_support_mat(self, features_matrix):
         nparts = len(self.subgraphs)
         splitted_features = [[] for x in range(nparts)]
         threads = []
         
         for s in range(nparts):
-            t = threading.Thread(target=self.split_mat, args=(splitted_features[s], features_matrix, s))
+            t = threading.Thread(target=self.torch_split_mat, args=(splitted_features[s], features_matrix, s))
             t.start()
             t.join()
 
         return splitted_features
 
-    # Addition of rows to a bigger matrix
-    def sum_mat(self, mat1, mat2, nodes):
-        for i in range(len(nodes)):
-            mat1[nodes[i]] += mat2[i]
-        
-        return mat1
-
-    # Split features matrix using numpy
-    def split_support_mat(self, features_matrix):
+    # Split features matrix using numpy (SEQ)
+    def numpy_split_support_mat(self, features_matrix):
         nparts = len(self.subgraphs)
-        features_matrix_np = features_matrix.detach().numpy()
+        self.features_matrix = features_matrix.detach().numpy()
         splitted_features = [[] for x in range(nparts)]
 
         # Iterate over the number of subgraphs
@@ -92,8 +97,28 @@ class GraphConvolution(Module):
             # Iterate over the vectors of a subgraph
             K = []
             for j in range(len(self.subgraphs[i])):
-                K.append(features_matrix_np[self.subgraphs[i][j],:].tolist())
+                K.append(self.features_matrix[self.subgraphs[i][j],:].tolist())
             splitted_features[i] = torch.FloatTensor(K)
+
+        return splitted_features
+
+    # Parallel numpy function
+    def numpy_split_mat(self, pos):
+        K = []
+
+        for j in range(len(self.subgraphs[pos])):
+            K.append(self.features_matrix[self.subgraphs[pos][j],:].tolist())
+
+        return torch.FloatTensor(K)
+
+    # Split features matrix using a parallel implementation based on numpy
+    def parallel_numpy_split_support_mat(self, features_matrix):
+        nparts = len(self.subgraphs)
+        self.features_matrix = features_matrix.detach().numpy()
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self.numpy_split_mat, i) for i in range(nparts)]
+            splitted_features = [f.result() for f in futures]
 
         return splitted_features
 
@@ -107,7 +132,7 @@ class GraphConvolution(Module):
             n_subgraphs = len(self.subgraphs)
 
             # 1. Split a of l (support) according to subgraphs
-            support_subgraphs = self.split_support_mat(support)
+            support_subgraphs = self.numpy_split_support_mat(support)
 
             # 2. Execute subgrahs
             agg_subgraphs = np.zeros((support.shape[0], self.out_features), dtype=np.float32)
