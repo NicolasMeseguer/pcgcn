@@ -10,3 +10,7 @@
 *.grmat
 *.frmat
 *.lrmat
+!/rmat/Red_Magpie.grmat
+!/rmat/Lime_Hawk.grmat
+!/rmat/Silver_Parrot.grmat
+!/rmat/Magenta_Spoonbill.grmat
